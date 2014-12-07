@@ -94,7 +94,7 @@ if ( !isset($config['syncthing']) || !is_array($config['syncthing'])) {
     exec ("cd {$config['syncthing']['rootfolder']} && tar -xzvf stable --strip-components 1");
     exec ("rm {$config['syncthing']['rootfolder']}stable");
     if ( !is_file ($cwdir.'syncthing') ) { echo 'Executable file "syncthing" not found, installation aborted!'; exit (3); }
-    $config['syncthing']['product_version'] = exec ($cwdir."syncthing -version");
+    $config['syncthing']['product_version'] = exec("su root -c '{$config['syncthing']['rootfolder']}syncthing -version'");
     if (!is_dir ($config['syncthing']['rootfolder'].'config')) { exec ("mkdir -p ".$config['syncthing']['rootfolder'].'config'); }
     if (!is_dir ($config['syncthing']['backupfolder'])) { exec ("mkdir -p ".$config['syncthing']['backupfolder']); }
     if (!is_dir ($config['syncthing']['updatefolder'])) { exec ("mkdir -p ".$config['syncthing']['updatefolder']); }
