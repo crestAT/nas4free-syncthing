@@ -46,6 +46,8 @@ if ( !isset( $config['syncthing']['rootfolder']) && !is_dir( $config['syncthing'
 } 
 if (!isset($config['syncthing']) || !is_array($config['syncthing'])) $config['syncthing'] = array();
 
+require_once("{$config['syncthing']['rootfolder']}files/functions.inc");
+
 /* Check if the directory exists, the mountpoint has at least o=rx permissions and
  * set the permission to 775 for the last directory in the path
  */

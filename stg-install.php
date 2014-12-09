@@ -30,6 +30,7 @@
     either expressed or implied, of the FreeBSD Project.
 */
 // Version Date        Description
+// 0.1.1   2014.12.09  F: renew product_version on auto-upgrade
 // 0.1.0   2014.12.07  first public release
 // 0.0.2   2014.12.06  new installer
 // 0.0.1   2014.12.02  first beta
@@ -55,13 +56,15 @@ $release = explode("-", exec("uname -r"));
 if ($release[0] >= 9.3) $verify_hostname = "--no-verify-hostname";
 else $verify_hostname = "";
 
-$return_val = mwexec("fetch {$verify_hostname} -vo {$install_dir}master.zip 'https://www.a3s.at/_blog/_NAS4FREE/fp-plugins/downloadctr/res/download.php?x=syncthing/syncthing-v010.zip'", true);
+$return_val = mwexec("fetch {$verify_hostname} -vo {$install_dir}master.zip 'https://www.a3s.at/_blog/_NAS4FREE/fp-plugins/downloadctr/res/download.php?x=syncthing/syncthing-v011.zip'", true);
 if ($return_val == 0) {
     $return_val = mwexec("tar -xf {$install_dir}master.zip -C {$install_dir} --exclude='.git*' --strip-components 1", true);
     if ($return_val == 0) {
         exec("rm {$install_dir}master.zip");
         exec("chmod -R 775 {$install_dir}syncthing");
-        $savemsg = sprintf(gettext("Update to version %s completed!"), $config['syncthing']['version']);
+        if (is_file("{$install_dir}syncthing/version.txt")) { $file_version = exec("cat {$install_dir}syncthing/version.txt"); }
+        else { $file_version = "n/a"; }
+        $savemsg = sprintf(gettext("Update to version %s completed!"), $file_version);
     }
     else { $input_errors[] = sprintf(gettext("Archive file %s not found, installation aborted!"), "master.zip corrupt /"); }
 }

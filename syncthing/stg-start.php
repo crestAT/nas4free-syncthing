@@ -39,10 +39,13 @@ if (is_file("{$config['syncthing']['rootfolder']}version.txt")) {
     }
 }
 
-// save backup from auto-upgrade to backup folder
+// save backup from auto-upgrade to backup folder and renew product_version
 if (is_file("{$config['syncthing']['rootfolder']}syncthing.old")) {
     $version_old = exec("{$config['syncthing']['rootfolder']}syncthing.old -version | awk '{print $2}'");
     mwexec("mv -v {$config['syncthing']['rootfolder']}syncthing.old {$config['syncthing']['backupfolder']}syncthing-{$version_old}", true);
+    exec("logger syncthing: Syncthing version {$version_old} has been backuped!");
+    $config['syncthing']['product_version'] = exec("{$config['syncthing']['rootfolder']}syncthing -version");
+    write_config();
 }
 
 if ( !is_dir ( '/usr/local/www/ext/syncthing')) { exec ("mkdir -p /usr/local/www/ext/syncthing"); }

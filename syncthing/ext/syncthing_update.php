@@ -35,45 +35,23 @@ require("guiconfig.inc");
 bindtextdomain("nas4free", "/usr/local/share/locale-stg");
 $pgtitle = array(gettext("Extensions"), $config['syncthing']['appname']." ".$config['syncthing']['version'], gettext("Maintenance"));
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-/*     
-    $size_server = exec("fetch -s {$config['syncthing']['download_url']}", $size_server, $return_val);
-    if ( $return_val == 0) {
-        if ($size_server != $config['syncthing']['size']) {
-        $savemsg = sprintf(gettext("New %s version available - push '%s' button to download the new version!"), $config['syncthing']['appname'], gettext("Fetch")); }
-    }
- */
-    // save backup from auto-upgrade to backup folder
-    if (is_file("{$config['syncthing']['rootfolder']}syncthing.old")) {
-        $version_old = stg_call("syncthing.old -version");
-        $v = explode(" ", $version_old);
-        $savemsg = sprintf(gettext("Syncthing version %s has been backuped!"), $v[1]);
-        mwexec("mv -v {$config['syncthing']['rootfolder']}syncthing.old {$config['syncthing']['backupfolder']}syncthing-{$v[1]}", true);
-    }
-}
-
 $pconfig['product_version_new'] = !empty($config['syncthing']['product_version_new']) ? $config['syncthing']['product_version_new'] : "n/a";
 
-function stg_call($input, &$return_val = NULL) {
-    global $config;
-
-    $o = exec("su root -c '{$config['syncthing']['rootfolder']}{$input}'", $output, $return_val);
-    return $o;
-}
+require_once("{$config['syncthing']['rootfolder']}files/functions.inc");
 
 if (isset($_POST['save_url']) && $_POST['save_url']) {
     if (!empty($_POST['download_url'])) {
         $config['syncthing']['previous_url'] = $config['syncthing']['download_url'];
         $config['syncthing']['download_url'] = $_POST['download_url'];
         write_config();
-        $savemsg = gettext("New download URL saved!");
+        $savemsg .= gettext("New download URL saved!");
     }
 }
 
 if (isset($_POST['revert_url']) && $_POST['revert_url']) {
     $config['syncthing']['download_url'] = $config['syncthing']['previous_url'];
     write_config();
-    $savemsg = gettext("Previous download URL activated!");
+    $savemsg .= gettext("Previous download URL activated!");
 }
 
 if (isset($_POST['get_file']) && $_POST['get_file']) {
@@ -81,7 +59,7 @@ if (isset($_POST['get_file']) && $_POST['get_file']) {
         exec("killall -15 syncthing");
         $v = explode(" ", stg_call("syncthing -version"));
         mwexec("cp -v {$config['syncthing']['rootfolder']}syncthing {$config['syncthing']['backupfolder']}syncthing-{$v[1]}", true);
-        $savemsg = sprintf(gettext("Syncthing version %s has been backuped!"), $v[1]);
+        $savemsg .= sprintf(gettext("Syncthing version %s has been backuped!"), $v[1]);
         $return_val = mwexec ("fetch -o {$config['syncthing']['rootfolder']}stable {$_POST['download_url']}", true);
         if ( $return_val != 0) { $input_errors[] = gettext("Could not install new version!"); }
         else {
@@ -112,7 +90,7 @@ if (isset($_POST['install_new']) && $_POST['install_new']) {
         $pconfig['product_version_new'] = "n/a";
         $config['syncthing']['product_version_new'] = $pconfig['product_version_new'];
         write_config();
-        $savemsg = gettext("New version installed!");
+        $savemsg .= gettext("New version installed!");
     }	
 }
 
@@ -142,7 +120,7 @@ if ( isset( $_POST['delete_backup'] ) && $_POST['delete_backup'] ) {
     else {
         if (is_file($_POST['installfile'])) {
             exec("rm ".$_POST['installfile']);
-            $savemsg = sprintf(gettext("File version %s deleted!"), $_POST['installfile']);
+            $savemsg .= sprintf(gettext("File version %s deleted!"), $_POST['installfile']);
         }
         else { $input_errors[] = sprintf(gettext("File %s not found!"), $_POST['installfile']); }
     }
@@ -164,8 +142,8 @@ if ( isset( $_POST['install_backup'] ) && $_POST['install_backup'] ) {
                 $pconfig['product_version_new'] = "n/a"; 
                 $config['syncthing']['product_version_new'] = $pconfig['product_version_new'];
                 write_config();
-                if (isset($config['syncthing']['enable'])) { $savemsg = gettext("Backup version installed!"); }
-                else { $savemsg = sprintf(gettext("Backup version installed! Go to %s and enable, save & restart to run %s !"), gettext('Configuration'), $config['syncthing']['appname']); }
+                if (isset($config['syncthing']['enable'])) { $savemsg .= gettext("Backup version installed!"); }
+                else { $savemsg .= sprintf(gettext("Backup version installed! Go to %s and enable, save & restart to run %s !"), gettext('Configuration'), $config['syncthing']['appname']); }
             }
         }
         else { $input_errors[] = sprintf(gettext("File %s not found!"), $_POST['installfile']); }
@@ -321,7 +299,7 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
 			$retval |= rc_update_service("cron");
 			config_unlock();
 		}
-		$savemsg = get_std_save_message($retval);
+		$savemsg .= get_std_save_message($retval);
 		if ($retval == 0) {
 			updatenotify_delete("cronjob");
 		}
