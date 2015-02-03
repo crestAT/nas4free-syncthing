@@ -1,4 +1,6 @@
 ﻿Version Date        Description
+0.1.2   2015.02.03  F: minor bug in product_version
+                    C: download most recent version v0.10.21 on installation
 0.1.1   2014.12.09  F: renew product_version on auto-upgrade
 0.1.0   2014.12.07  first public release
 

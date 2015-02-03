@@ -30,11 +30,15 @@
     either expressed or implied, of the FreeBSD Project.
 */
 // Version Date        Description
+// 0.1.2   2015.02.03  F: minor bug in product_version
+//                     C: download most recent version v0.10.21 on installation   
 // 0.1.1   2014.12.09  F: renew product_version on auto-upgrade
 // 0.1.0   2014.12.07  first public release
 // 0.0.2   2014.12.06  new installer
 // 0.0.1   2014.12.02  first beta
 
+$v = "v0.10.21";                            // application version
+$vstg = "v012";                             // extension version
 $appname = "Syncthing";
 
 require_once("config.inc");
@@ -56,7 +60,7 @@ $release = explode("-", exec("uname -r"));
 if ($release[0] >= 9.3) $verify_hostname = "--no-verify-hostname";
 else $verify_hostname = "";
 
-$return_val = mwexec("fetch {$verify_hostname} -vo {$install_dir}master.zip 'https://www.a3s.at/_blog/_NAS4FREE/fp-plugins/downloadctr/res/download.php?x=syncthing/syncthing-v011.zip'", true);
+$return_val = mwexec("fetch {$verify_hostname} -vo {$install_dir}master.zip https://www.a3s.at/_blog/_NAS4FREE/fp-plugins/downloadctr/res/download.php?x=syncthing/syncthing-{$vstg}.zip", true);
 if ($return_val == 0) {
     $return_val = mwexec("tar -xf {$install_dir}master.zip -C {$install_dir} --exclude='.git*' --strip-components 1", true);
     if ($return_val == 0) {
@@ -91,13 +95,13 @@ if ( !isset($config['syncthing']) || !is_array($config['syncthing'])) {
     $config['rc']['postinit']['cmd'][$i] = $config['syncthing']['rootfolder']."syncthing_start.php";
     if ($arch == "i386" || $arch == "x86") { $config['syncthing']['architecture'] = "386"; }
     else { $config['syncthing']['architecture'] = "amd64"; }
-	$config['syncthing']['download_url'] = "https://github.com/syncthing/syncthing/releases/download/v0.10.6/syncthing-freebsd-".$config['syncthing']['architecture']."-v0.10.6.tar.gz";
+	$config['syncthing']['download_url'] = "https://github.com/syncthing/syncthing/releases/download/{$v}/syncthing-freebsd-{$config['syncthing']['architecture']}-{$v}.tar.gz";
 	$config['syncthing']['previous_url'] = $config['syncthing']['download_url'];
     mwexec ("fetch -o {$config['syncthing']['rootfolder']}stable {$config['syncthing']['download_url']}", true);
     exec ("cd {$config['syncthing']['rootfolder']} && tar -xzvf stable --strip-components 1");
     exec ("rm {$config['syncthing']['rootfolder']}stable");
     if ( !is_file ($cwdir.'syncthing') ) { echo 'Executable file "syncthing" not found, installation aborted!'; exit (3); }
-    $config['syncthing']['product_version'] = exec("su root -c '{$config['syncthing']['rootfolder']}syncthing -version'");
+    $config['syncthing']['product_version'] = $v;
     if (!is_dir ($config['syncthing']['rootfolder'].'config')) { exec ("mkdir -p ".$config['syncthing']['rootfolder'].'config'); }
     if (!is_dir ($config['syncthing']['backupfolder'])) { exec ("mkdir -p ".$config['syncthing']['backupfolder']); }
     if (!is_dir ($config['syncthing']['updatefolder'])) { exec ("mkdir -p ".$config['syncthing']['updatefolder']); }
