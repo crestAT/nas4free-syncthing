@@ -26,10 +26,5 @@ cd /mnt/DATA/extensions && fetch https://raw.github.com/crestAT/nas4free-syncthi
 <pre>
 HISTORY
 -------
-Version Date        Description
-0.1.0   2014.12.07  first public release
-
-N: ...  new feature
-C: ...  changes
-F: ...  bug fix
+see syncthing/release_notes.txt
 </pre>

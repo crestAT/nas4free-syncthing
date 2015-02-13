@@ -95,22 +95,17 @@ if (isset($_POST['install_new']) && $_POST['install_new']) {
 }
 
 if (isset($_POST['fetch']) && $_POST['fetch']) {
-//$savemsg="1<br />";
     $upgrademsg = stg_call("syncthing -upgrade-check");
-//$savemsg.="2 $upgrademsg<br />";
     $v = explode('"', $upgrademsg);
-//$savemsg.="3 $v[3]<br />";
     $pconfig['product_version_new'] = $v[3];
     if (strpos($upgrademsg, "FATAL") !== false) { $pconfig['product_version_new'] = 'n/a'; $input_errors[] = gettext("Could not retrieve new version!"); }
     else {
-//$savemsg.="4 <br />";
         if (strpos($upgrademsg, "No upgrade available") !== false) { $savemsg .= gettext("No new version available!"); }
         else {
-//$savemsg.="5 <br />";
             $savemsg .= sprintf(gettext("New version %s available, push '"), $pconfig['product_version_new']).gettext('Install').gettext("' button to install the new version!");
-            $config['syncthing']['product_version_new'] = $pconfig['product_version_new'];
         }
     }
+    $config['syncthing']['product_version_new'] = $pconfig['product_version_new'];
     write_config();
 }
 
@@ -359,6 +354,8 @@ if (is_ajax()) {
 	render_ajax($procinfo);
 }
 
+$wait_message = gettext("The selected operation will be completed. Please do not click any other buttons!");
+
 bindtextdomain("nas4free", "/usr/local/share/locale");
 include("fbegin.inc");?>
 <script type="text/javascript">//<![CDATA[
@@ -380,10 +377,11 @@ function update_change() {
 <!-- This function allows the pages to render the buttons impotent whilst carrying out various functions -->
 
 function fetch_handler() {
+    var varNameSpace = <?php echo json_encode($wait_message); ?>;
 	if ( document.iform.beenSubmitted )
 		alert('Please wait for the previous operation to complete!');
 	else{
-		return confirm('The selected operation will be completed. Please do not click any other buttons.');
+		return confirm(varNameSpace);
 	}
 }
 
@@ -422,7 +420,7 @@ function enable_change(enable_change) {
 				<td class="vtable"><?=$pconfig['product_version_new'].gettext(" - push 'fetch' button to check for new version");?>
                     <span class="label">&nbsp;&nbsp;&nbsp;</span>
                     <input id="fetch" name="fetch" type="submit" class="formbtn" value="<?=gettext("Fetch");?>" onClick="return fetch_handler();" />
-                    <?php if ($pconfig['product_version_new'] !== "n/a") { ?>
+                    <?php if (($config['syncthing']['product_version_new'] !== "n/a") && (strpos($config['syncthing']['product_version'], $config['syncthing']['product_version_new']) === false)) { ?>
                         <input id="install_new" name="install_new" type="submit" class="formbtn" value="<?=gettext("Install");?>" onClick="return fetch_handler();" />
                     <?php } ?>
                     <a href='http://syncthing.net/' target='_blank'>&nbsp;&nbsp;&nbsp;-> Syncthing</a>
@@ -431,7 +429,7 @@ function enable_change(enable_change) {
             <?php html_inputbox("download_url", gettext("Download URL"), $config['syncthing']['download_url'], sprintf(gettext("Define a new permanent application download URL or an URL for a one-time download of a previous version.<br />Previous download URL was <b>%s</b>"), $config['syncthing']['previous_url']), false, 110);?>
         </table>
         <div id="remarks">
-            <?php html_remark("note_url", gettext("Note"), sprintf(gettext("Use 'Save URL' to change the download URL permanently, 'Revert URL' to activate a previously saved URL or 'Get File' to download a previous version - for example <b>https://github.com/syncthing/syncthing/releases/download/v0.10.6/syncthing-freebsd-amd64-v0.10.6.tar.gz</b> (after the download push 'Install' to install the newly downloaded file).")));?>
+            <?php html_remark("note_url", gettext("Note"), sprintf(gettext("Use 'Save URL' to change the download URL permanently, 'Revert URL' to activate a previously saved URL or '%s' to download a previous version - for example <b>https://github.com/syncthing/syncthing/releases/download/v0.10.6/syncthing-freebsd-amd64-v0.10.6.tar.gz</b>."), gettext("Download and Install")));?>
         </div>
         <div id="submit">
             <input id="save_url" name="save_url" type="submit" class="formbtn" value="<?=gettext("Save URL");?>" onClick="return fetch_handler();" />
