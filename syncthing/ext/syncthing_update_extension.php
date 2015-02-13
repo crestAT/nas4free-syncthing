@@ -139,6 +139,17 @@ if (isset($_POST['ext_update']) && $_POST['ext_update']) {
 }
 bindtextdomain("nas4free", "/usr/local/share/locale");
 include("fbegin.inc");?>
+<script type="text/javascript">
+<!--
+function fetch_handler() {
+	if ( document.iform.beenSubmitted )
+		alert('Please wait for the previous operation to complete!');
+	else{
+		return confirm('The selected operation will be completed. Please do not click any other buttons.');
+	}
+}
+//-->
+</script>
 <form action="syncthing_update_extension.php" method="post" name="iform" id="iform">
 <?php bindtextdomain("nas4free", "/usr/local/share/locale-stg"); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -162,8 +173,8 @@ include("fbegin.inc");?>
         <div id="update_remarks">
             <?php html_remark("note_remove", gettext("Note"), gettext("Removing Syncthing integration from NAS4Free will leave the installation folder untouched - remove the files using Windows Explorer, FTP or some other tool of your choice. <br /><b>Please note: this page will no longer be available.</b> You'll have to re-run Syncthing extension installation to get it back on your NAS4Free."));?>
             <br />
-            <input id="ext_update" name="ext_update" type="submit" class="formbtn" value="<?=gettext("Update Extension");?>" onclick="return confirm('<?=gettext("The selected operation will be completed. Please do not click any other buttons!");?>')" />
-            <input id="ext_remove" name="ext_remove" type="submit" class="formbtn" value="<?=gettext("Remove Extension");?>" onclick="return confirm('<?=gettext("Do you really want to remove the extension from the system?");?>')" />
+            <input id="ext_update" name="ext_update" type="submit" class="formbtn" value="<?=gettext("Update Extension");?>" onClick="return fetch_handler();" />
+            <input id="ext_remove" name="ext_remove" type="submit" class="formbtn" value="<?=gettext("Remove Extension");?>" onClick="return fetch_handler();" />
         </div>
         <table width="100%" border="0" cellpadding="6" cellspacing="0">
 			<?php html_separator();?>

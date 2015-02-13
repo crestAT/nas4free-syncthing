@@ -32,7 +32,6 @@
 
 function stg_call($input, &$return_val = NULL) {
     global $config;
-    global $savemsg;
 
     $o = exec("su root -c '{$config['syncthing']['rootfolder']}{$input}'", $output, $return_val);
     return $o;
