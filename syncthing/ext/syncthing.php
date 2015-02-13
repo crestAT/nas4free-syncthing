@@ -109,7 +109,7 @@ if (isset($_POST['save']) && $_POST['save']) {
             if (is_file($config['syncthing']['storage_path']."config.xml")) { $sync_conf = XML2Array::createArray(file_get_contents($config['syncthing']['storage_path']."config.xml")); }
             else { 
                 $sync_conf = array();
-                $sync_conf['configuration']['@attributes']['version'] = "6";
+                $sync_conf['configuration']['@attributes']['version'] = "7";
             }
             $sync_conf['configuration']['gui']['@attributes']['enabled'] = isset($_POST['gui_enabled']) ? true : false;
             $sync_conf['configuration']['gui']['@attributes']['tls'] = isset($_POST['gui_tls']) ? true : false;
