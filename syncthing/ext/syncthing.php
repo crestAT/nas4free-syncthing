@@ -38,6 +38,8 @@ $dummy = gettext("The changes have been applied successfully.");
 $dummy = gettext("The configuration has been changed.<br />You must apply the changes in order for them to take effect.");
 $dummy = gettext("The following input errors were detected");
 
+define("GLOBALASERVER", "udp4://announce.syncthing.net:22026");
+
 bindtextdomain("nas4free", "/usr/local/share/locale-stg");
 $pgtitle = array(gettext("Extensions"), $config['syncthing']['appname']." ".$config['syncthing']['version']);
 
@@ -126,7 +128,7 @@ if (isset($_POST['save']) && $_POST['save']) {
             else { $sync_conf['configuration']['options']['autoUpgradeIntervalH'] = !empty($_POST['autoUpgradeIntervalH']) ? $_POST['autoUpgradeIntervalH'] : "12"; }
             $sync_conf['configuration']['options']['startBrowser'] = isset($_POST['startBrowser']) ? true : false;
             $sync_conf['configuration']['options']['listenAddress'] = !empty($_POST['listenAddress']) ? $_POST['listenAddress'] : "0.0.0.0:22000";
-            $sync_conf['configuration']['options']['globalAnnounceServer'] = !empty($_POST['globalAnnounceServer']) ? $_POST['globalAnnounceServer'] : "announce.syncthing.net:22025";
+            $sync_conf['configuration']['options']['globalAnnounceServer'] = !empty($_POST['globalAnnounceServer']) ? $_POST['globalAnnounceServer'] : GLOBALASERVER;
             $sync_conf['configuration']['options']['globalAnnounceEnabled'] = isset($_POST['globalAnnounceEnabled']) ? true : false;
             $sync_conf['configuration']['options']['localAnnounceEnabled'] = isset($_POST['localAnnounceEnabled']) ? true : false;
             $sync_conf['configuration']['options']['localAnnouncePort'] = !empty($_POST['localAnnouncePort']) ? $_POST['localAnnouncePort'] : "21025";
@@ -335,7 +337,7 @@ $pconfig['password'] = !empty($sync_conf['configuration']['gui']['password']) ? 
 $pconfig['autoUpgradeIntervalH'] = !empty($sync_conf['configuration']['options']['autoUpgradeIntervalH']) ? $sync_conf['configuration']['options']['autoUpgradeIntervalH'] : "12";
 $pconfig['startBrowser'] = isset($sync_conf['configuration']['options']['startBrowser']) ? $sync_conf['configuration']['options']['startBrowser'] : "false";
 $pconfig['listenAddress'] = !empty($sync_conf['configuration']['options']['listenAddress']) ? $sync_conf['configuration']['options']['listenAddress'] : "0.0.0.0:22000";
-$pconfig['globalAnnounceServer'] = !empty($sync_conf['configuration']['options']['globalAnnounceServer']) ? $sync_conf['configuration']['options']['globalAnnounceServer'] : "announce.syncthing.net:22025";
+$pconfig['globalAnnounceServer'] = !empty($sync_conf['configuration']['options']['globalAnnounceServer']) ? $sync_conf['configuration']['options']['globalAnnounceServer'] : GLOBALASERVER;
 $pconfig['globalAnnounceEnabled'] = isset($sync_conf['configuration']['options']['globalAnnounceEnabled']) ? $sync_conf['configuration']['options']['globalAnnounceEnabled'] : "true";
 $pconfig['localAnnounceEnabled'] = isset($sync_conf['configuration']['options']['localAnnounceEnabled']) ? $sync_conf['configuration']['options']['localAnnounceEnabled'] : "true";
 $pconfig['localAnnouncePort'] = !empty($sync_conf['configuration']['options']['localAnnouncePort']) ? $sync_conf['configuration']['options']['localAnnouncePort'] : "21025";
@@ -353,6 +355,12 @@ $pconfig['cacheIgnoredFiles'] = isset($sync_conf['configuration']['options']['ca
 $pconfig['parallelRequests'] = !empty($sync_conf['configuration']['options']['parallelRequests']) ? $sync_conf['configuration']['options']['parallelRequests'] : "16";
 $pconfig['rescanIntervalS'] = !empty($sync_conf['configuration']['options']['rescanIntervalS']) ? $sync_conf['configuration']['options']['rescanIntervalS'] : "60";
 $pconfig['reconnectionIntervalS'] = !empty($sync_conf['configuration']['options']['reconnectionIntervalS']) ? $sync_conf['configuration']['options']['reconnectionIntervalS'] : "60";
+
+// check for default globalAnnounceServer from older STG versions < v0.10.15 and eventually change to udp format  
+$v = explode(" ", stg_call("syncthing -version"));
+$strarray = array("v0.", "."); 
+$vstr = str_replace($strarray, "", $v[1]);
+if (($pconfig['globalAnnounceServer'] == "announce.syncthing.net:22025") && ($vstr >= 1015)) { $pconfig['globalAnnounceServer'] = GLOBALASERVER; }  
 
 $a_interface = get_interface_list();
 // Add VLAN interfaces (from user Vasily1)
@@ -549,7 +557,7 @@ function as_change() {
 			<?php html_filechooser("storage_path", gettext("Storage path"), $pconfig['storage_path'], gettext("Where to save auxilliary app files."), $g['media_path'], false, 60);?>
             <?php html_checkbox("gui_enabled", "gui_enabled", ($pconfig['gui_enabled'] == "true" ? true : false), gettext("Defines if the Syncthing WebUI can be used."), gettext("Default is enabled."), false);?>
             <?php html_inputbox("listenAddress", "listenAddress", $pconfig['listenAddress'], sprintf(gettext("host:port or :port string denoting an address to listen for BEP (sync protocol) connections. Default is %s."), "0.0.0.0:22000"), false, 25);?>
-            <?php html_inputbox("globalAnnounceServer", "globalAnnounceServer", $pconfig['globalAnnounceServer'], sprintf(gettext("host:port where a global announce server may be reached. Default is %s."), "announce.syncthing.net:22025"), false, 60);?>
+            <?php html_inputbox("globalAnnounceServer", "globalAnnounceServer", $pconfig['globalAnnounceServer'], sprintf(gettext("host:port where a global announce server may be reached. Default is %s."), GLOBALASERVER), false, 60);?>
             <?php html_checkbox("globalAnnounceEnabled", "globalAnnounceEnabled", ($pconfig['globalAnnounceEnabled'] == "true" ? true : false), gettext("globalAnnounceEnabled."), gettext("Default is enabled."), false);?>
             <?php html_checkbox("localAnnounceEnabled", "localAnnounceEnabled", ($pconfig['localAnnounceEnabled'] == "true" ? true : false), gettext("localAnnounceEnabled."), gettext("Default is enabled."), false);?>
             <?php html_inputbox("localAnnouncePort", "localAnnouncePort", $pconfig['localAnnouncePort'], sprintf(gettext("localAnnouncePort. Default is %d."), 21025), false, 5);?>
@@ -569,7 +577,7 @@ function as_change() {
             <?php html_inputbox("reconnectionIntervalS", "reconnectionIntervalS", $pconfig['reconnectionIntervalS'], sprintf(gettext("The number of seconds to wait between each attempt to connect to currently unconnected nodes. Default is %d seconds."), 60), false, 5);?>
         </table>
         <div id="remarks">
-            <?php html_remark("note", gettext("Note"), sprintf(gettext("These parameters will be added to %s."), "{$config['syncthing']['storage_path']}config.xml")." ".sprintf(gettext("Please check the <a href='%s' target='_blank'>documentation</a>."), "https://discourse.syncthing.net/c/documentation"));?>
+            <?php html_remark("note", gettext("Note"), sprintf(gettext("These parameters will be added to %s."), "{$config['syncthing']['storage_path']}config.xml")." ".sprintf(gettext("Please check the <a href='%s' target='_blank'>documentation</a>."), "https://github.com/syncthing/syncthing/wiki"));?>
         </div>
         <div id="submit">
 			<input id="save" name="save" type="submit" class="formbtn" value="<?=gettext("Save and Restart");?>"/>

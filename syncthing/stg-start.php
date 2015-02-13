@@ -39,6 +39,19 @@ if (is_file("{$config['syncthing']['rootfolder']}version.txt")) {
     }
 }
 
+// check for ca_root_certificate and create link if not exists (Syncthing needs it now ...)
+if (!is_file("/usr/local/share/certs/ca-root-nss.crt")) {
+    mwexec("mkdir -p /usr/local/share/certs", false);
+    if (is_file("/usr/local/etc/ssl/cert.pem")) { 
+        mwexec("ln -s /usr/local/etc/ssl/cert.pem /usr/local/share/certs/ca-root-nss.crt", false); 
+        exec("logger syncthing: cert.pem exists, create link ...");
+    }
+    else { 
+        mwexec("ln -s {$config['syncthing']['rootfolder']}files/cert.pem /usr/local/share/certs/ca-root-nss.crt", false); 
+        exec("logger syncthing: cert.pem doesn't exist, use own certificate ...");
+    }
+}
+    
 // save backup from auto-upgrade to backup folder and renew product_version
 if (is_file("{$config['syncthing']['rootfolder']}syncthing.old")) {
     $version_old = exec("{$config['syncthing']['rootfolder']}syncthing.old -version | awk '{print $2}'");
@@ -50,7 +63,8 @@ if (is_file("{$config['syncthing']['rootfolder']}syncthing.old")) {
 
 if ( !is_dir ( '/usr/local/www/ext/syncthing')) { exec ("mkdir -p /usr/local/www/ext/syncthing"); }
 mwexec ("cp {$config['syncthing']['rootfolder']}ext/* /usr/local/www/ext/syncthing/", true);
-mwexec ("cp -R {$config['syncthing']['rootfolder']}locale-stg /usr/local/share/", true);
+mwexec ("rm -R /usr/local/share/locale-stg");
+exec("ln -s {$config['syncthing']['rootfolder']}locale-stg /usr/local/share/");
 if ( !is_link ( "/usr/local/www/syncthing.php")) { exec ("ln -s /usr/local/www/ext/syncthing/syncthing.php /usr/local/www/syncthing.php"); }
 if ( !is_link ( "/usr/local/www/syncthing_log.php")) { exec ("ln -s /usr/local/www/ext/syncthing/syncthing_log.php /usr/local/www/syncthing_log.php"); }
 if ( !is_link ( "/usr/local/www/syncthing_log.inc")) { exec ("ln -s /usr/local/www/ext/syncthing/syncthing_log.inc /usr/local/www/syncthing_log.inc"); }
