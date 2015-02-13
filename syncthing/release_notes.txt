@@ -3,6 +3,7 @@
                     C: repository to Github
                     C: default globalAnnounceServer address -> udp4://announce.syncthing.net:22026
                     C: updated documentation link
+                    C: updated Greek translation
                     C: updated French translation
                     C: updated Russian translation
                     C: updated German translation
