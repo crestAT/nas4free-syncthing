@@ -38,7 +38,7 @@ $dummy = gettext("The changes have been applied successfully.");
 $dummy = gettext("The configuration has been changed.<br />You must apply the changes in order for them to take effect.");
 $dummy = gettext("The following input errors were detected");
 
-define("GLOBALASERVER", "udp4://announce.syncthing.net:22026");
+define("GLOBALASERVER", "default");
 
 bindtextdomain("nas4free", "/usr/local/share/locale-stg");
 $pgtitle = array(gettext("Extensions"), $config['syncthing']['appname']." ".$config['syncthing']['version']);
@@ -124,8 +124,7 @@ if (isset($_POST['save']) && $_POST['save']) {
                 unset($sync_conf['configuration']['gui']['user']);
                 unset($sync_conf['configuration']['gui']['password']);
             }
-            if ($_POST['autoUpgradeIntervalH'] == "0") { unset($sync_conf['configuration']['options']['autoUpgradeIntervalH']); }
-            else { $sync_conf['configuration']['options']['autoUpgradeIntervalH'] = !empty($_POST['autoUpgradeIntervalH']) ? $_POST['autoUpgradeIntervalH'] : "12"; }
+            $sync_conf['configuration']['options']['autoUpgradeIntervalH'] = !empty($_POST['autoUpgradeIntervalH']) ? $_POST['autoUpgradeIntervalH'] : "12";
             $sync_conf['configuration']['options']['startBrowser'] = isset($_POST['startBrowser']) ? true : false;
             $sync_conf['configuration']['options']['listenAddress'] = !empty($_POST['listenAddress']) ? $_POST['listenAddress'] : "0.0.0.0:22000";
             $sync_conf['configuration']['options']['globalAnnounceServer'] = !empty($_POST['globalAnnounceServer']) ? $_POST['globalAnnounceServer'] : GLOBALASERVER;
@@ -334,7 +333,7 @@ $pconfig['address'] = !empty($sync_conf['configuration']['gui']['address']) ? $s
 $pconfig['username'] = !empty($sync_conf['configuration']['gui']['user']) ? $sync_conf['configuration']['gui']['user'] : "";
 $pconfig['password'] = !empty($sync_conf['configuration']['gui']['password']) ? $sync_conf['configuration']['gui']['password'] : "";
  */
-$pconfig['autoUpgradeIntervalH'] = !empty($sync_conf['configuration']['options']['autoUpgradeIntervalH']) ? $sync_conf['configuration']['options']['autoUpgradeIntervalH'] : "12";
+$pconfig['autoUpgradeIntervalH'] = isset($sync_conf['configuration']['options']['autoUpgradeIntervalH']) ? $sync_conf['configuration']['options']['autoUpgradeIntervalH'] : "12";
 $pconfig['startBrowser'] = isset($sync_conf['configuration']['options']['startBrowser']) ? $sync_conf['configuration']['options']['startBrowser'] : "false";
 $pconfig['listenAddress'] = !empty($sync_conf['configuration']['options']['listenAddress']) ? $sync_conf['configuration']['options']['listenAddress'] : "0.0.0.0:22000";
 $pconfig['globalAnnounceServer'] = !empty($sync_conf['configuration']['options']['globalAnnounceServer']) ? $sync_conf['configuration']['options']['globalAnnounceServer'] : GLOBALASERVER;
@@ -548,7 +547,7 @@ function as_change() {
             <?php html_inputbox("username", gettext("WebUI")." ".gettext("Username"), $pconfig['username'], gettext("Username for the Syncthing WebUI."), false, 20);?>
             <?php html_passwordbox("password", gettext("WebUI")." ".gettext("Password"), $pconfig['password'], gettext("Password for the Syncthing WebUI."), false, 20);?>
  -->
-            <?php html_inputbox("autoUpgradeIntervalH", gettext("Automatic upgrades"), $pconfig['autoUpgradeIntervalH'], sprintf(gettext("The number of hours to wait between each check for application upgrades (-1 = disabled, no automatic upgrades). Default is %d hours."), 12), false, 5);?>
+            <?php html_inputbox("autoUpgradeIntervalH", gettext("Automatic upgrades"), $pconfig['autoUpgradeIntervalH'], sprintf(gettext("The number of hours to wait between each check for application upgrades (0 = disabled, no automatic upgrades). Default is %d hours."), 12), false, 5);?>
             <?php html_checkbox("resetuser", gettext("Reset WebUI user"), false, "<b><font color='#FF0000'>".gettext("Reset (delete) username and password. Use the Syncthing WebUI to define a new username and password.")."</font></b>", "", false);?>
 			<?php html_separator();?>
         	<?php html_titleline_checkbox("as_enable", gettext("Advanced settings"), isset($_POST['as_enable']) ? true : false, gettext("Show"), "as_change()");?>
