@@ -2,7 +2,7 @@
 /*
     syncthing_update_extension.php
     
-    Copyright (c) 2013, 2014, Andreas Schmidhuber
+    Copyright (c) 2013 - 2016 Andreas Schmidhuber
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -93,32 +93,34 @@ if (isset($_POST['ext_remove']) && $_POST['ext_remove']) {
 	}
 // remove cronjobs
     if (isset($config['syncthing']['enable_schedule'])) {
-    	updatenotify_set("cronjob", UPDATENOTIFY_MODE_DIRTY, $config['syncthing']['schedule_uuid_startup']);
-    	if (is_array($config['cron']['job'])) {
-    				$index = array_search_ex($data, $config['cron']['job'], "uuid");
-    				if (false !== $index) {
-    					unset($config['cron']['job'][$index]);
-    				}
-    			}
-    	write_config();
-    	updatenotify_set("cronjob", UPDATENOTIFY_MODE_DIRTY, $config['syncthing']['schedule_uuid_closedown']);
-    	if (is_array($config['cron']['job'])) {
-    				$index = array_search_ex($data, $config['cron']['job'], "uuid");
-    				if (false !== $index) {
-    					unset($config['cron']['job'][$index]);
-    				}
-    			}
-    	write_config();
-        $retval = 0;
-        if (!file_exists($d_sysrebootreqd_path)) {
-        	$retval |= updatenotify_process("cronjob", "cronjob_process_updatenotification");
-        	config_lock();
-        	$retval |= rc_update_service("cron");
-        	config_unlock();
-        }
-        $savemsg = get_std_save_message($retval);
-        if ($retval == 0) {
-        	updatenotify_delete("cronjob");
+    	if (is_array($config['cron']['job'])) {                                                            // check if cron jobs exists !!!
+        	updatenotify_set("cronjob", UPDATENOTIFY_MODE_DIRTY, $config['syncthing']['schedule_uuid_startup']);
+        	if (is_array($config['cron']['job'])) {
+        				$index = array_search_ex($data, $config['cron']['job'], "uuid");
+        				if (false !== $index) {
+        					unset($config['cron']['job'][$index]);
+        				}
+        			}
+        	write_config();
+        	updatenotify_set("cronjob", UPDATENOTIFY_MODE_DIRTY, $config['syncthing']['schedule_uuid_closedown']);
+        	if (is_array($config['cron']['job'])) {
+        				$index = array_search_ex($data, $config['cron']['job'], "uuid");
+        				if (false !== $index) {
+        					unset($config['cron']['job'][$index]);
+        				}
+        			}
+        	write_config();
+            $retval = 0;
+            if (!file_exists($d_sysrebootreqd_path)) {
+            	$retval |= updatenotify_process("cronjob", "cronjob_process_updatenotification");
+            	config_lock();
+            	$retval |= rc_update_service("cron");
+            	config_unlock();
+            }
+            $savemsg = get_std_save_message($retval);
+            if ($retval == 0) {
+            	updatenotify_delete("cronjob");
+            }
         }
     }
 // remove application section from config.xml
@@ -139,7 +141,12 @@ if (isset($_POST['ext_update']) && $_POST['ext_update']) {
 }
 bindtextdomain("nas4free", "/usr/local/share/locale");
 include("fbegin.inc");?>
-<form action="syncthing_update_extension.php" method="post" name="iform" id="iform">
+<!-- The Spinner Elements -->
+<?php include("ext/syncthing/spinner.inc");?>
+<script src="ext/syncthing/spin.min.js"></script>
+<!-- use: onsubmit="spinner()" within the form tag -->
+
+<form action="syncthing_update_extension.php" method="post" name="iform" id="iform" onsubmit="spinner()">
 <?php bindtextdomain("nas4free", "/usr/local/share/locale-stg"); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
 	<tr><td class="tabnavtbl">

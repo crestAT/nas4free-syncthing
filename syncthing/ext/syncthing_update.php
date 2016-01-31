@@ -2,7 +2,7 @@
 /*
     syncthing_update.php
     
-    Copyright (c) 2013, 2014, Andreas Schmidhuber
+    Copyright (c) 2013 - 2016 Andreas Schmidhuber
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -393,7 +393,12 @@ function enable_change(enable_change) {
 
 //-->
 </script>
-<form action="syncthing_update.php" method="post" name="iform" id="iform">
+<!-- The Spinner Elements -->
+<?php include("ext/syncthing/spinner.inc");?>
+<script src="ext/syncthing/spin.min.js"></script>
+<!-- use: onsubmit="spinner()" within the form tag -->
+
+<form action="syncthing_update.php" method="post" name="iform" id="iform" onsubmit="spinner()">
 <?php bindtextdomain("nas4free", "/usr/local/share/locale-stg"); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
 	<tr><td class="tabnavtbl">

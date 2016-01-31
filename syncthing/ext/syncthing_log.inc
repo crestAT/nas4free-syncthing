@@ -2,17 +2,8 @@
 /*
 	syncthing_log.inc
 
-	Part of NAS4Free (http://www.nas4free.org).
-	Copyright (c) 2012-2013 The NAS4Free Project <info@nas4free.org>.
-	All rights reserved.
-
-	Portions of freenas (http://www.freenas.org).
-	Copyright (c) 2005-2011 by Olivier Cochard <olivier@freenas.org>.
-	All rights reserved.
-	
-	Portions of m0n0wall (http://m0n0.ch/wall).
-	Copyright (c) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.	
+    Copyright (c) 2013 - 2016 Andreas Schmidhuber
+    All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met: 
@@ -64,6 +55,7 @@ $loginfo = array(
 			array("title" => gettext("Level"), "class" => "listr", "param" => "nowrap=\"nowrap\"", "pmid" => 3),
 			array("title" => gettext("Event"), "class" => "listr", "param" => "", "pmid" => 4)
 		)),
+/* 
 	array(
 		"visible" => TRUE,
 		"desc" => gettext("Internal"),
@@ -75,6 +67,7 @@ $loginfo = array(
 			array("title" => gettext("Date & Time"), "class" => "listlr", "param" => "nowrap=\"nowrap\"", "pmid" => 1),
 			array("title" => gettext("Event"), "class" => "listr", "param" => "", "pmid" => 2)
 		)),
+ */
 	array(
 		"visible" => TRUE,
 		"desc" => gettext("System"),

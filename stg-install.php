@@ -2,7 +2,7 @@
 /* 
     stg-install.php
      
-    Copyright (c) 2014 Andreas Schmidhuber
+    Copyright (c) 2014 - 2016 Andreas Schmidhuber
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,12 @@
     of the authors and should not be interpreted as representing official policies,
     either expressed or implied, of the FreeBSD Project.
 */
-
-$vstg = "v0.1.3";                           // extension version
-$v = "v0.10.21";                            // application version
+/*
+Version Date        Description
+0.1.4   2016.01.30  minor bug fixes and GUI enhancements, set most recent Syncthing release 
+*/
+$vstg = "v0.1.4";                           // extension version
+$v = "v0.12.16";                            // application version
 $appname = "Syncthing";
 
 require_once("config.inc");
@@ -45,8 +48,9 @@ if ($platform != "embedded" && $platform != "full" && $platform != "livecd" && $
 global $input_errors;
 global $savemsg;
 
-$install_dir = "./";
-if (isset($config['syncthing']['rootfolder'])) { $install_dir = dirname($config['syncthing']['rootfolder'])."/"; }
+$install_dir = dirname(__FILE__)."/";                           // get directory where the installer script resides
+if (!is_dir("{$install_dir}syncthing/backup")) { mkdir("{$install_dir}syncthing/backup", 0775, true); }
+if (!is_dir("{$install_dir}syncthing/update")) { mkdir("{$install_dir}syncthing/update", 0775, true); }
 
 // check FreeBSD release for fetch options >= 9.3
 $release = explode("-", exec("uname -r"));
@@ -107,7 +111,36 @@ if ( !isset($config['syncthing']) || !is_array($config['syncthing'])) {
     echo "\n\nInstallation completed, use WebGUI | Extensions | ".$appname." to configure \nthe application (don't forget to refresh the WebGUI before use)!\n";
 }
 else { 
+
+	$cwdir = getcwd();
+	$path1 = pathinfo($cwdir);
+	$config['syncthing']['appname'] = $appname;
+	$config['syncthing']['rootfolder'] = $path1['dirname']."/".$path1['basename']."/syncthing/";
+	$config['syncthing']['backupfolder'] = $config['syncthing']['rootfolder']."backup/";
+	$config['syncthing']['updatefolder'] = $config['syncthing']['rootfolder']."update/";
+    $config['syncthing']['version'] = exec("cat {$config['syncthing']['rootfolder']}version.txt");
+	$cwdir = $config['syncthing']['rootfolder'];
+    $i = 0;
+    if ( is_array($config['rc']['postinit'] ) && is_array( $config['rc']['postinit']['cmd'] ) ) {
+        for ($i; $i < count($config['rc']['postinit']['cmd']);) {
+            if (preg_match('/syncthing/', $config['rc']['postinit']['cmd'][$i])) break;
+            ++$i;
+        }
+    }
+    $config['rc']['postinit']['cmd'][$i] = $config['syncthing']['rootfolder']."syncthing_start.php";
+    if ($arch == "i386" || $arch == "x86") { $config['syncthing']['architecture'] = "386"; }
+    else { $config['syncthing']['architecture'] = "amd64"; }
 	$config['syncthing']['download_url'] = "https://github.com/syncthing/syncthing/releases/download/{$v}/syncthing-freebsd-{$config['syncthing']['architecture']}-{$v}.tar.gz";
+	$config['syncthing']['previous_url'] = $config['syncthing']['download_url'];
+    mwexec ("fetch -o {$config['syncthing']['rootfolder']}stable {$config['syncthing']['download_url']}", true);
+    exec ("cd {$config['syncthing']['rootfolder']} && tar -xzvf stable --strip-components 1");
+    exec ("rm {$config['syncthing']['rootfolder']}stable");
+    $config['syncthing']['product_version'] = $v;
+    if (!is_dir ($config['syncthing']['rootfolder'].'config')) { exec ("mkdir -p ".$config['syncthing']['rootfolder'].'config'); }
+    if (!is_dir ($config['syncthing']['backupfolder'])) { exec ("mkdir -p ".$config['syncthing']['backupfolder']); }
+    if (!is_dir ($config['syncthing']['updatefolder'])) { exec ("mkdir -p ".$config['syncthing']['updatefolder']); }
+   	exec ("cp ".$cwdir."syncthing ".$config['syncthing']['backupfolder']."syncthing-".$config['syncthing']['product_version']);
+    if ($config['syncthing']['product_version'] == '') { $config['syncthing']['product_version'] = 'n/a'; }
     write_config();
     require_once("{$config['syncthing']['rootfolder']}stg-start.php");
 }

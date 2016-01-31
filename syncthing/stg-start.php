@@ -2,7 +2,7 @@
 /* 
     syncthing_start.php
 
-    Copyright (c) 2013, 2014, Andreas Schmidhuber
+    Copyright (c) 2013 - 2016 Andreas Schmidhuber
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -74,6 +74,7 @@ if (isset($config['syncthing']['enable'])) {
     exec("killall -15 syncthing");
     exec("logger syncthing: enabled, start syncthing ...");
     exec($config['syncthing']['command']);
+    sleep(5);                                                           // give time to startup
     if (exec('ps acx | grep syncthing')) { exec("logger syncthing: startup OK"); }    
     else { exec("logger syncthing: startup NOT ok" ); } 
 }
