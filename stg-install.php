@@ -74,15 +74,12 @@ else { $input_errors[] = sprintf(gettext("Archive file %s not found, installatio
 
 // install application on server
 if ( !isset($config['syncthing']) || !is_array($config['syncthing'])) {
-	$cwdir = getcwd();
     $config['syncthing'] = array();
-	$path1 = pathinfo($cwdir);
 	$config['syncthing']['appname'] = $appname;
-	$config['syncthing']['rootfolder'] = $path1['dirname']."/".$path1['basename']."/syncthing/";
+    $config['syncthing']['version'] = exec("cat {$config['syncthing']['rootfolder']}version.txt");
+	$config['syncthing']['rootfolder'] = "{$install_dir}syncthing/";
 	$config['syncthing']['backupfolder'] = $config['syncthing']['rootfolder']."backup/";
 	$config['syncthing']['updatefolder'] = $config['syncthing']['rootfolder']."update/";
-    $config['syncthing']['version'] = exec("cat {$config['syncthing']['rootfolder']}version.txt");
-	$cwdir = $config['syncthing']['rootfolder'];
     $i = 0;
     if ( is_array($config['rc']['postinit'] ) && is_array( $config['rc']['postinit']['cmd'] ) ) {
         for ($i; $i < count($config['rc']['postinit']['cmd']);) {
@@ -98,12 +95,12 @@ if ( !isset($config['syncthing']) || !is_array($config['syncthing'])) {
     mwexec ("fetch -o {$config['syncthing']['rootfolder']}stable {$config['syncthing']['download_url']}", true);
     exec ("cd {$config['syncthing']['rootfolder']} && tar -xzvf stable --strip-components 1");
     exec ("rm {$config['syncthing']['rootfolder']}stable");
-    if ( !is_file ($cwdir.'syncthing') ) { echo 'Executable file "syncthing" not found, installation aborted!'; exit (3); }
+    if ( !is_file ($config['syncthing']['rootfolder'].'syncthing') ) { echo 'Executable file "syncthing" not found, installation aborted!'; exit (3); }
     $config['syncthing']['product_version'] = $v;
     if (!is_dir ($config['syncthing']['rootfolder'].'config')) { exec ("mkdir -p ".$config['syncthing']['rootfolder'].'config'); }
     if (!is_dir ($config['syncthing']['backupfolder'])) { exec ("mkdir -p ".$config['syncthing']['backupfolder']); }
     if (!is_dir ($config['syncthing']['updatefolder'])) { exec ("mkdir -p ".$config['syncthing']['updatefolder']); }
-   	exec ("cp ".$cwdir."syncthing ".$config['syncthing']['backupfolder']."syncthing-".$config['syncthing']['product_version']);
+   	exec ("cp ".$config['syncthing']['rootfolder']."syncthing ".$config['syncthing']['backupfolder']."syncthing-".$config['syncthing']['product_version']);
     if ($config['syncthing']['product_version'] == '') { $config['syncthing']['product_version'] = 'n/a'; }
     write_config();
     require_once("{$config['syncthing']['rootfolder']}stg-start.php");
@@ -111,15 +108,11 @@ if ( !isset($config['syncthing']) || !is_array($config['syncthing'])) {
     echo "\n\nInstallation completed, use WebGUI | Extensions | ".$appname." to configure \nthe application (don't forget to refresh the WebGUI before use)!\n";
 }
 else { 
-
-	$cwdir = getcwd();
-	$path1 = pathinfo($cwdir);
 	$config['syncthing']['appname'] = $appname;
-	$config['syncthing']['rootfolder'] = $path1['dirname']."/".$path1['basename']."/syncthing/";
+    $config['syncthing']['version'] = exec("cat {$config['syncthing']['rootfolder']}version.txt");
+	$config['syncthing']['rootfolder'] = "{$install_dir}syncthing/";
 	$config['syncthing']['backupfolder'] = $config['syncthing']['rootfolder']."backup/";
 	$config['syncthing']['updatefolder'] = $config['syncthing']['rootfolder']."update/";
-    $config['syncthing']['version'] = exec("cat {$config['syncthing']['rootfolder']}version.txt");
-	$cwdir = $config['syncthing']['rootfolder'];
     $i = 0;
     if ( is_array($config['rc']['postinit'] ) && is_array( $config['rc']['postinit']['cmd'] ) ) {
         for ($i; $i < count($config['rc']['postinit']['cmd']);) {
@@ -139,7 +132,7 @@ else {
     if (!is_dir ($config['syncthing']['rootfolder'].'config')) { exec ("mkdir -p ".$config['syncthing']['rootfolder'].'config'); }
     if (!is_dir ($config['syncthing']['backupfolder'])) { exec ("mkdir -p ".$config['syncthing']['backupfolder']); }
     if (!is_dir ($config['syncthing']['updatefolder'])) { exec ("mkdir -p ".$config['syncthing']['updatefolder']); }
-   	exec ("cp ".$cwdir."syncthing ".$config['syncthing']['backupfolder']."syncthing-".$config['syncthing']['product_version']);
+   	exec ("cp ".$config['syncthing']['rootfolder']."syncthing ".$config['syncthing']['backupfolder']."syncthing-".$config['syncthing']['product_version']);
     if ($config['syncthing']['product_version'] == '') { $config['syncthing']['product_version'] = 'n/a'; }
     write_config();
     require_once("{$config['syncthing']['rootfolder']}stg-start.php");
