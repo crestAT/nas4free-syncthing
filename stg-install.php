@@ -29,12 +29,8 @@
     of the authors and should not be interpreted as representing official policies,
     either expressed or implied, of the FreeBSD Project.
 */
-/*
-Version Date        Description
-0.1.4   2016.01.30  minor bug fixes and GUI enhancements, set most recent Syncthing release 
-*/
-$vstg = "v0.1.4";                           // extension version
-$v = "v0.12.16";                            // application version
+$vstg = "v0.1.5";                           // extension version
+$v = "v0.12.25";                            // application version
 $appname = "Syncthing";
 
 require_once("config.inc");
@@ -68,18 +64,18 @@ if ($return_val == 0) {
         else { $file_version = "n/a"; }
         $savemsg = sprintf(gettext("Update to version %s completed!"), $file_version);
     }
-    else { $input_errors[] = sprintf(gettext("Archive file %s not found, installation aborted!"), "master.zip corrupt /"); }
+    else { $input_errors[] = sprintf(gettext("Archive file %s not found, installation aborted!"), "master.zip corrupt /"); return;}
 }
-else { $input_errors[] = sprintf(gettext("Archive file %s not found, installation aborted!"), "master.zip"); }
+else { $input_errors[] = sprintf(gettext("Archive file %s not found, installation aborted!"), "master.zip"); return;}
 
 // install application on server
 if ( !isset($config['syncthing']) || !is_array($config['syncthing'])) {
     $config['syncthing'] = array();
 	$config['syncthing']['appname'] = $appname;
-    $config['syncthing']['version'] = exec("cat {$config['syncthing']['rootfolder']}version.txt");
 	$config['syncthing']['rootfolder'] = "{$install_dir}syncthing/";
 	$config['syncthing']['backupfolder'] = $config['syncthing']['rootfolder']."backup/";
 	$config['syncthing']['updatefolder'] = $config['syncthing']['rootfolder']."update/";
+    $config['syncthing']['version'] = exec("cat {$config['syncthing']['rootfolder']}version.txt");
     $i = 0;
     if ( is_array($config['rc']['postinit'] ) && is_array( $config['rc']['postinit']['cmd'] ) ) {
         for ($i; $i < count($config['rc']['postinit']['cmd']);) {
