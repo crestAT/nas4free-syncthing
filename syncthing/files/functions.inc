@@ -2,8 +2,12 @@
 /*
     functions.inc
     
-    Copyright (c) 2013, 2014, Andreas Schmidhuber
+    Copyright (c) 2013 - 2017 Andreas Schmidhuber <info@a3s.at>
     All rights reserved.
+
+	Portions of NAS4Free (http://www.nas4free.org).
+	Copyright (c) 2012-2017 The NAS4Free Project <info@nas4free.org>.
+	All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions are met:
@@ -31,22 +35,22 @@
  */
 
 function stg_call($input, &$return_val = NULL) {
-    global $config;
+    global $configuration;
     global $savemsg;
 
-    $o = exec("su root -c '{$config['syncthing']['rootfolder']}{$input}'", $output, $return_val);
+    $o = exec("su root -c '{$configuration['rootfolder']}{$input}'", $output, $return_val);
     return $o;
 }
 
 // save backup from auto-upgrade to backup folder and renew product_version
-if (is_file("{$config['syncthing']['rootfolder']}syncthing.old")) {
+if (is_file("{$configuration['rootfolder']}syncthing.old")) {
     $version_old = stg_call("syncthing.old -version");
     $v = explode(" ", $version_old);
-    mwexec("mv -v {$config['syncthing']['rootfolder']}syncthing.old {$config['syncthing']['backupfolder']}syncthing-{$v[1]}", true);
+    mwexec("mv -v {$configuration['rootfolder']}syncthing.old {$configuration['backupfolder']}syncthing-{$v[1]}", true);
     $savemsg .= sprintf(gettext("Syncthing version %s has been backuped!"), $v[1])." ";
     exec("logger syncthing: Syncthing version {$v[1]} has been backuped!");
-    $config['syncthing']['product_version'] = stg_call("syncthing -version");
-    write_config();
+    $configuration['product_version'] = stg_call("syncthing -version");
+	ext_save_config($config_file, $configuration);
 }
 
 ?>

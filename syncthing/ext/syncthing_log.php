@@ -2,8 +2,12 @@
 /*
 	syncthing_log.php
 	
-    Copyright (c) 2013 - 2016 Andreas Schmidhuber
+    Copyright (c) 2013 - 2017 Andreas Schmidhuber <info@a3s.at>
     All rights reserved.
+
+	Portions of NAS4Free (http://www.nas4free.org).
+	Copyright (c) 2012-2017 The NAS4Free Project <info@nas4free.org>.
+	All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions are met:
@@ -41,12 +45,18 @@ if (empty($log))
 	$log = 0;
 
 bindtextdomain("nas4free", "/usr/local/share/locale-stg");
-$pgtitle = array(gettext("Extensions"), $config['syncthing']['appname']." ".$config['syncthing']['version'], gettext("Log"));
+
+$config_file = "ext/syncthing/syncthing.conf";
+require_once("ext/syncthing/extension-lib.inc");
+if (($configuration = ext_load_config($config_file)) === false) $input_errors[] = sprintf(gettext("Configuration file %s not found!"), "syncthing.conf");
+if (!isset($configuration['rootfolder']) && !is_dir($configuration['rootfolder'] )) $input_errors[] = gettext("Extension installed with fault");
+
+$pgtitle = array(gettext("Extensions"), $configuration['appname']." ".$configuration['version'], gettext("Log"));
 
 if (isset($_POST['save']) && $_POST['save']) {
-    $config['syncthing']['filter_icf'] = isset($_POST['filter_icf']) ? true : false;
-    $config['syncthing']['filter_str'] = !empty($_POST['filter_str']) ? htmlspecialchars($_POST['filter_str']) : false;
-    $savemsg = get_std_save_message(write_config());
+    $configuration['filter_icf'] = isset($_POST['filter_icf']) ? true : false;
+    $configuration['filter_str'] = !empty($_POST['filter_str']) ? htmlspecialchars($_POST['filter_str']) : false;
+	$savemsg = get_std_save_message(ext_save_config($config_file, $configuration));
 }
 
 if (isset($_POST['clear']) && $_POST['clear']) {
@@ -75,7 +85,12 @@ function log_change() {
 }
 //-->
 </script>
-<form action="syncthing_log.php" method="post" name="iform" id="iform">
+<!-- The Spinner Elements -->
+<?php include("ext/syncthing/spinner.inc");?>
+<script src="ext/syncthing/spin.min.js"></script>
+<!-- use: onsubmit="spinner()" within the form tag -->
+
+<form action="syncthing_log.php" method="post" name="iform" id="iform" onsubmit="spinner()">
 <?php bindtextdomain("nas4free", "/usr/local/share/locale-stg"); ?>
     <table width="100%" border="0" cellpadding="0" cellspacing="0">
     	<tr><td class="tabnavtbl">
@@ -91,8 +106,8 @@ function log_change() {
             <?php if (!empty($savemsg)) print_info_box($savemsg);?>
             <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <?php html_titleline(gettext("Filter"));?>
-<!--                 <?php html_checkbox("filter_icf", gettext("Incoming connections"), isset($config['syncthing']['filter_icf']) ? true : false, gettext("Hide \"Incoming connection from\" messages."), false );?> -->
-                <?php html_inputbox("filter_str", gettext("Filter string"), !empty($config['syncthing']['filter_str']) ? $config['syncthing']['filter_str'] : "", gettext("Enter filter string (case sensitive) and hit \"Save Filter\" button to use the filter string permanently."), false, 15);?>
+<!--                 <?php html_checkbox("filter_icf", gettext("Incoming connections"), isset($configuration['filter_icf']) ? true : false, gettext("Hide \"Incoming connection from\" messages."), false );?> -->
+                <?php html_inputbox("filter_str", gettext("Filter string"), !empty($configuration['filter_str']) ? $configuration['filter_str'] : "", gettext("Enter filter string (case sensitive) and hit \"Save Filter\" button to use the filter string permanently."), false, 15);?>
                 <?php html_separator();?>
             </table>
     		<select id="log" class="formfld" onchange="log_change()" name="log">

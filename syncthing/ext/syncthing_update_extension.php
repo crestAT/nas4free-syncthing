@@ -2,8 +2,12 @@
 /*
     syncthing_update_extension.php
     
-    Copyright (c) 2013 - 2016 Andreas Schmidhuber
+    Copyright (c) 2013 - 2017 Andreas Schmidhuber <info@a3s.at>
     All rights reserved.
+
+	Portions of NAS4Free (http://www.nas4free.org).
+	Copyright (c) 2012-2017 The NAS4Free Project <info@nas4free.org>.
+	All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions are met:
@@ -33,17 +37,23 @@ require("auth.inc");
 require("guiconfig.inc");
 
 bindtextdomain("nas4free", "/usr/local/share/locale-stg");
-$pgtitle = array(gettext("Extensions"), $config['syncthing']['appname']." ".$config['syncthing']['version'], gettext("Extension Maintenance"));
 
-if (is_file("{$config['syncthing']['updatefolder']}oneload")) {
-    require_once("{$config['syncthing']['updatefolder']}oneload");
+$config_file = "ext/syncthing/syncthing.conf";
+require_once("ext/syncthing/extension-lib.inc");
+if (($configuration = ext_load_config($config_file)) === false) $input_errors[] = sprintf(gettext("Configuration file %s not found!"), "syncthing.conf");
+if (!isset($configuration['rootfolder']) && !is_dir($configuration['rootfolder'] )) $input_errors[] = gettext("Extension installed with fault");
+
+$pgtitle = array(gettext("Extensions"), $configuration['appname']." ".$configuration['version'], gettext("Extension Maintenance"));
+
+if (is_file("{$configuration['updatefolder']}oneload")) {
+    require_once("{$configuration['updatefolder']}oneload");
 }
 
-$return_val = mwexec("fetch -o {$config['syncthing']['updatefolder']}version.txt https://raw.github.com/crestAT/nas4free-syncthing/master/syncthing/version.txt", true);
-if ($return_val == 0) { 
-    $server_version = exec("cat {$config['syncthing']['updatefolder']}version.txt"); 
-    if ($server_version != $config['syncthing']['version']) { $savemsg = sprintf(gettext("New extension version %s available, push '%s' button to install the new version!"), $server_version, gettext("Update Extension")); }
-    mwexec("fetch -o {$config['syncthing']['rootfolder']}release_notes.txt https://raw.github.com/crestAT/nas4free-syncthing/master/syncthing/release_notes.txt", false);
+$return_val = mwexec("fetch -o {$configuration['updatefolder']}version.txt https://raw.github.com/crestAT/nas4free-syncthing/master/syncthing/version.txt", true);
+if ($return_val == 0) {
+    $server_version = exec("cat {$configuration['updatefolder']}version.txt");
+    if ($server_version != $configuration['version']) { $savemsg = sprintf(gettext("New extension version %s available, push '%s' button to install the new version!"), $server_version, gettext("Update Extension")); }
+    mwexec("fetch -o {$configuration['rootfolder']}release_notes.txt https://raw.github.com/crestAT/nas4free-syncthing/master/syncthing/release_notes.txt", false);
 }
 else { $server_version = gettext("Unable to retrieve version from server!"); }
 
@@ -55,7 +65,7 @@ function cronjob_process_updatenotification($mode, $data) {
 		case UPDATENOTIFY_MODE_MODIFIED:
 			break;
 		case UPDATENOTIFY_MODE_DIRTY:
-			if (is_array($config['cron']['job'])) {
+			if (is_array($config['cron']) && is_array($config['cron']['job'])) {
 				$index = array_search_ex($data, $config['cron']['job'], "uuid");
 				if (false !== $index) {
 					unset($config['cron']['job'][$index]);
@@ -68,47 +78,37 @@ function cronjob_process_updatenotification($mode, $data) {
 }
 
 if (isset($_POST['ext_remove']) && $_POST['ext_remove']) {
-    $install_dir = dirname($config['syncthing']['rootfolder']);
+    $install_dir = dirname($configuration['rootfolder']);
 // kill running process
-    exec("killall -15 syncthing");
-// remove application section
-    if ( is_array($config['rc']['postinit'] ) && is_array( $config['rc']['postinit']['cmd'] ) ) {
-		for ($i = 0; $i < count($config['rc']['postinit']['cmd']);) {
-    		if (preg_match('/syncthing/', $config['rc']['postinit']['cmd'][$i])) {	unset($config['rc']['postinit']['cmd'][$i]);} else{}
-		++$i;
-		}
-	}
-	if ( is_array($config['rc']['shutdown'] ) && is_array( $config['rc']['shutdown']['cmd'] ) ) {
-		for ($i = 0; $i < count($config['rc']['shutdown']['cmd']); ) {
-            if (preg_match('/syncthing/', $config['rc']['shutdown']['cmd'][$i])) {	unset($config['rc']['shutdown']['cmd'][$i]); } else {}
-		++$i;
-		}
-	}
+    exec("killall syncthing");
+// remove start/stop commands
+	ext_remove_rc_commands("syncthing");
 // unlink created  links
 	if (is_dir ("/usr/local/www/ext/syncthing")) {
-	foreach ( glob( "{$config['syncthing']['rootfolder']}ext/*.php" ) as $file ) {
-	$file = str_replace("{$config['syncthing']['rootfolder']}ext/", "/usr/local/www", $file);
-	if ( is_link( $file ) ) { unlink( $file ); } else {} }
-	mwexec ("rm -rf /usr/local/www/ext/syncthing");
+		foreach ( glob( "{$configuration['rootfolder']}ext/*.php" ) as $file ) {
+		$file = str_replace("{$configuration['rootfolder']}ext/", "/usr/local/www", $file);
+		if ( is_link( $file ) ) { unlink( $file ); } else {} }
+		mwexec("rm -rf /usr/local/www/ext/syncthing");
+		mwexec("rmdir -p /usr/local/www/ext");    // to prevent empty extensions menu entry in top GUI menu if there are no other extensions installed
 	}
 // remove cronjobs
-    if (isset($config['syncthing']['enable_schedule'])) {
-    	if (is_array($config['cron']['job'])) {                                                            // check if cron jobs exists !!!
-        	updatenotify_set("cronjob", UPDATENOTIFY_MODE_DIRTY, $config['syncthing']['schedule_uuid_startup']);
-        	if (is_array($config['cron']['job'])) {
-        				$index = array_search_ex($data, $config['cron']['job'], "uuid");
-        				if (false !== $index) {
-        					unset($config['cron']['job'][$index]);
-        				}
-        			}
+    if (isset($configuration['enable_schedule'])) {
+		if (is_array($config['cron']) && is_array($config['cron']['job'])) {
+        	updatenotify_set("cronjob", UPDATENOTIFY_MODE_DIRTY, $configuration['schedule_uuid_startup']);
+			if (is_array($config['cron']) && is_array($config['cron']['job'])) {
+				$index = array_search_ex($data, $config['cron']['job'], "uuid");
+				if (false !== $index) {
+					unset($config['cron']['job'][$index]);
+				}
+			}
         	write_config();
-        	updatenotify_set("cronjob", UPDATENOTIFY_MODE_DIRTY, $config['syncthing']['schedule_uuid_closedown']);
-        	if (is_array($config['cron']['job'])) {
-        				$index = array_search_ex($data, $config['cron']['job'], "uuid");
-        				if (false !== $index) {
-        					unset($config['cron']['job'][$index]);
-        				}
-        			}
+	    	updatenotify_set("cronjob", UPDATENOTIFY_MODE_DIRTY, $configuration['schedule_uuid_closedown']);
+			if (is_array($config['cron']) && is_array($config['cron']['job'])) {
+				$index = array_search_ex($data, $config['cron']['job'], "uuid");
+				if (false !== $index) {
+					unset($config['cron']['job'][$index]);
+				}
+			}
         	write_config();
             $retval = 0;
             if (!file_exists($d_sysrebootreqd_path)) {
@@ -124,21 +124,22 @@ if (isset($_POST['ext_remove']) && $_POST['ext_remove']) {
         }
     }
 // remove application section from config.xml
-	if ( is_array($config['syncthing'] ) ) { unset( $config['syncthing'] ); write_config();}
+	if ( is_array($configuration ) ) { unset( $configuration ); write_config();}
 	header("Location:index.php");
 }
 
 if (isset($_POST['ext_update']) && $_POST['ext_update']) {
-    $install_dir = dirname($config['syncthing']['rootfolder']);
+    $install_dir = dirname($configuration['rootfolder']);
 // download installer
     $return_val = mwexec("fetch -vo {$install_dir}/stg-install.php https://raw.github.com/crestAT/nas4free-syncthing/master/stg-install.php", true);
     if ($return_val == 0) {
         require_once("{$install_dir}/stg-install.php"); 
         header("Refresh:8");;
-//        $savemsg = sprintf(gettext("Update to version %s completed!"), $config['syncthing']['version']);
+//        $savemsg = sprintf(gettext("Update to version %s completed!"), $configuration['version']);
     }
     else { $input_errors[] = sprintf(gettext("Archive file %s not found, installation aborted!"), "{$install_dir}/stg-install.php"); }
 }
+
 bindtextdomain("nas4free", "/usr/local/share/locale");
 include("fbegin.inc");?>
 <!-- The Spinner Elements -->
@@ -162,7 +163,7 @@ include("fbegin.inc");?>
         <?php if (!empty($savemsg)) print_info_box($savemsg);?>
         <table width="100%" border="0" cellpadding="6" cellspacing="0">
             <?php html_titleline(gettext("Extension Update"));?>
-			<?php html_text("ext_version_current", gettext("Installed version"), $config['syncthing']['version']);?>
+			<?php html_text("ext_version_current", gettext("Installed version"), $configuration['version']);?>
 			<?php html_text("ext_version_server", gettext("Latest version"), $server_version);?>
 			<?php html_separator();?>
         </table>
@@ -179,7 +180,7 @@ include("fbegin.inc");?>
 			<tr>
                 <td class="listt">
                     <div>
-                        <textarea style="width: 98%;" id="content" name="content" class="listcontent" cols="1" rows="25" readonly="readonly"><?php unset($lines); exec("/bin/cat {$config['syncthing']['rootfolder']}release_notes.txt", $lines); foreach ($lines as $line) { echo $line."\n"; }?></textarea>
+                        <textarea style="width: 98%;" id="content" name="content" class="listcontent" cols="1" rows="25" readonly="readonly"><?php unset($lines); exec("/bin/cat {$configuration['rootfolder']}release_notes.txt", $lines); foreach ($lines as $line) { echo $line."\n"; }?></textarea>
                     </div>
                 </td>
 			</tr>

@@ -2,8 +2,12 @@
 /*
     syncthing_update.php
     
-    Copyright (c) 2013 - 2016 Andreas Schmidhuber
+    Copyright (c) 2013 - 2017 Andreas Schmidhuber <info@a3s.at>
     All rights reserved.
+
+	Portions of NAS4Free (http://www.nas4free.org).
+	Copyright (c) 2012-2017 The NAS4Free Project <info@nas4free.org>.
+	All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions are met:
@@ -33,63 +37,68 @@ require("auth.inc");
 require("guiconfig.inc");
 
 bindtextdomain("nas4free", "/usr/local/share/locale-stg");
-$pgtitle = array(gettext("Extensions"), $config['syncthing']['appname']." ".$config['syncthing']['version'], gettext("Maintenance"));
 
-$pconfig['product_version_new'] = !empty($config['syncthing']['product_version_new']) ? $config['syncthing']['product_version_new'] : "n/a";
+$config_file = "ext/syncthing/syncthing.conf";
+require_once("ext/syncthing/extension-lib.inc");
+if (($configuration = ext_load_config($config_file)) === false) $input_errors[] = sprintf(gettext("Configuration file %s not found!"), "syncthing.conf");
+if (!isset($configuration['rootfolder']) && !is_dir($configuration['rootfolder'] )) $input_errors[] = gettext("Extension installed with fault");
+require_once("{$configuration['rootfolder']}files/functions.inc");
 
-require_once("{$config['syncthing']['rootfolder']}files/functions.inc");
+$pgtitle = array(gettext("Extensions"), $configuration['appname']." ".$configuration['version'], gettext("Maintenance"));
+
+$pconfig['product_version_new'] = !empty($configuration['product_version_new']) ? $configuration['product_version_new'] : "n/a";
 
 if (isset($_POST['save_url']) && $_POST['save_url']) {
     if (!empty($_POST['download_url'])) {
-        $config['syncthing']['previous_url'] = $config['syncthing']['download_url'];
-        $config['syncthing']['download_url'] = $_POST['download_url'];
-        write_config();
+        $configuration['previous_url'] = $configuration['download_url'];
+        $configuration['download_url'] = $_POST['download_url'];
+		$savemsg .= get_std_save_message(ext_save_config($config_file, $configuration));
         $savemsg .= gettext("New download URL saved!");
     }
 }
 
 if (isset($_POST['revert_url']) && $_POST['revert_url']) {
-    $config['syncthing']['download_url'] = $config['syncthing']['previous_url'];
-    write_config();
+    $configuration['download_url'] = $configuration['previous_url'];
+	$savemsg .= get_std_save_message(ext_save_config($config_file, $configuration));
     $savemsg .= gettext("Previous download URL activated!");
 }
 
 if (isset($_POST['get_file']) && $_POST['get_file']) {
     if (!empty($_POST['download_url'])) { 
-        exec("killall -15 syncthing");
+        exec("killall syncthing");
         $v = explode(" ", stg_call("syncthing -version"));
-        mwexec("cp -v {$config['syncthing']['rootfolder']}syncthing {$config['syncthing']['backupfolder']}syncthing-{$v[1]}", true);
+        mwexec("cp -v {$configuration['rootfolder']}syncthing {$configuration['backupfolder']}syncthing-{$v[1]}", true);
         $savemsg .= sprintf(gettext("Syncthing version %s has been backuped!"), $v[1]);
-        $return_val = mwexec ("fetch -o {$config['syncthing']['rootfolder']}stable {$_POST['download_url']}", true);
+        $return_val = mwexec ("fetch -o {$configuration['rootfolder']}stable {$_POST['download_url']}", true);
         if ( $return_val != 0) { $input_errors[] = gettext("Could not install new version!"); }
         else {
-            exec ("cd {$config['syncthing']['rootfolder']} && tar -xzvf stable --strip-components 1");
-            exec ("rm {$config['syncthing']['rootfolder']}stable");
-            $config['syncthing']['product_version'] = stg_call("syncthing -version");
-            $v = explode(" ", $config['syncthing']['product_version']);
-            mwexec("cp -v {$config['syncthing']['rootfolder']}syncthing {$config['syncthing']['backupfolder']}syncthing-{$v[1]}", true);
-            write_config();
+            exec ("cd {$configuration['rootfolder']} && tar -xzvf stable --strip-components 1");
+            exec ("rm {$configuration['rootfolder']}stable");
+            $configuration['product_version'] = stg_call("syncthing -version");
+            $v = explode(" ", $configuration['product_version']);
+            mwexec("cp -v {$configuration['rootfolder']}syncthing {$configuration['backupfolder']}syncthing-{$v[1]}", true);
+			ext_save_config($config_file, $configuration);
             $savemsg .= " ".gettext("New version installed!");
         }
     }
 }
 
 if (isset($_POST['install_new']) && $_POST['install_new']) {
-    if (isset($config['syncthing']['enable'])) { 
-        exec("killall -15 syncthing");
+    if ($configuration['enable']) { 
+        exec("killall syncthing");
         $return_val = 0;
         while( $return_val == 0 ) { sleep(1); exec('ps acx | grep syncthing', $output, $return_val); }
     }
     stg_call("syncthing -upgrade", $return_val); 
     if ( $return_val != 0) { $input_errors[] = gettext("Could not install new version!"); }
     else {
-        if (isset($config['syncthing']['enable'])) { exec($config['syncthing']['command']); }
-        $config['syncthing']['product_version'] = stg_call("syncthing -version");
+        if ($configuration['enable']) { exec($configuration['command']); }
+        $configuration['product_version'] = stg_call("syncthing -version");
         $v = explode(" ", stg_call("syncthing.old -version"));
-       	copy($config['syncthing']['rootfolder']."syncthing", $config['syncthing']['backupfolder']."syncthing-{$v[1]}");
+       	copy($configuration['rootfolder']."syncthing", $configuration['backupfolder']."syncthing-{$v[1]}");
         $pconfig['product_version_new'] = "n/a";
-        $config['syncthing']['product_version_new'] = $pconfig['product_version_new'];
-        write_config();
+        $configuration['product_version_new'] = $pconfig['product_version_new'];
+		ext_save_config($config_file, $configuration);
         $savemsg .= gettext("New version installed!");
     }	
 }
@@ -105,8 +114,8 @@ if (isset($_POST['fetch']) && $_POST['fetch']) {
             $savemsg .= sprintf(gettext("New version %s available, push '"), $pconfig['product_version_new']).gettext('Install').gettext("' button to install the new version!");
         }
     }
-    $config['syncthing']['product_version_new'] = $pconfig['product_version_new'];
-    write_config();
+    $configuration['product_version_new'] = $pconfig['product_version_new'];
+	ext_save_config($config_file, $configuration);
 }
 
 
@@ -125,20 +134,20 @@ if ( isset( $_POST['install_backup'] ) && $_POST['install_backup'] ) {
     if ( !isset($_POST['installfile']) ) { $input_errors[] = gettext("No file selected to install!") ; }
     else {
         if (is_file($_POST['installfile'])) {
-            if (isset($config['syncthing']['enable'])) { 
-                exec("killall -15 syncthing");
+            if ($configuration['enable']) { 
+                exec("killall syncthing");
                 $return_val = 0;
                 while( $return_val == 0 ) { sleep(1); exec('ps acx | grep syncthing', $output, $return_val); }
             }
-            if (!copy($_POST['installfile'], $config['syncthing']['rootfolder']."syncthing")) { $input_errors[] = gettext("Could not install backup version!"); }
+            if (!copy($_POST['installfile'], $configuration['rootfolder']."syncthing")) { $input_errors[] = gettext("Could not install backup version!"); }
             else {
-                if (isset($config['syncthing']['enable'])) { exec($config['syncthing']['command']); }
-                $config['syncthing']['product_version'] = stg_call("syncthing -version");
+                if ($configuration['enable']) { exec($configuration['command']); }
+                $configuration['product_version'] = stg_call("syncthing -version");
                 $pconfig['product_version_new'] = "n/a"; 
-                $config['syncthing']['product_version_new'] = $pconfig['product_version_new'];
-                write_config();
-                if (isset($config['syncthing']['enable'])) { $savemsg .= gettext("Backup version installed!"); }
-                else { $savemsg .= sprintf(gettext("Backup version installed! Go to %s and enable, save & restart to run %s !"), gettext('Configuration'), $config['syncthing']['appname']); }
+                $configuration['product_version_new'] = $pconfig['product_version_new'];
+				ext_save_config($config_file, $configuration);
+                if ($configuration['enable']) { $savemsg .= gettext("Backup version installed!"); }
+                else { $savemsg .= sprintf(gettext("Backup version installed! Go to %s and enable, save & restart to run %s !"), gettext('Configuration'), $configuration['appname']); }
             }
         }
         else { $input_errors[] = sprintf(gettext("File %s not found!"), $_POST['installfile']); }
@@ -153,7 +162,7 @@ function cronjob_process_updatenotification($mode, $data) {
 		case UPDATENOTIFY_MODE_MODIFIED:
 			break;
 		case UPDATENOTIFY_MODE_DIRTY:
-			if (is_array($config['cron']['job'])) {
+			if (is_array($config['cron']) && is_array($config['cron']['job'])) {
 				$index = array_search_ex($data, $config['cron']['job'], "uuid");
 				if (false !== $index) {
 					unset($config['cron']['job'][$index]);
@@ -169,19 +178,19 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
     if (isset($_POST['enable_schedule']) && ($_POST['startup'] == $_POST['closedown'])) { $input_errors[] = gettext("Startup and closedown hour must be different!"); }
     else {
         if (isset($_POST['enable_schedule'])) {
-            $config['syncthing']['enable_schedule'] = isset($_POST['enable_schedule']) ? true : false;
-            $config['syncthing']['schedule_startup'] = $_POST['startup'];
-            $config['syncthing']['schedule_closedown'] = $_POST['closedown'];
+            $configuration['enable_schedule'] = isset($_POST['enable_schedule']) ? true : false;
+            $configuration['schedule_startup'] = $_POST['startup'];
+            $configuration['schedule_closedown'] = $_POST['closedown'];
     
             $cronjob = array();
             $a_cronjob = &$config['cron']['job'];
-            $uuid = isset($config['syncthing']['schedule_uuid_startup']) ? $config['syncthing']['schedule_uuid_startup'] : false;
+            $uuid = isset($configuration['schedule_uuid_startup']) ? $configuration['schedule_uuid_startup'] : false;
             if (isset($uuid) && (FALSE !== ($cnid = array_search_ex($uuid, $a_cronjob, "uuid")))) {
             	$cronjob['enable'] = true;
             	$cronjob['uuid'] = $a_cronjob[$cnid]['uuid'];
-            	$cronjob['desc'] = "Syncthing startup (@ {$config['syncthing']['schedule_startup']}:00)";
+            	$cronjob['desc'] = "Syncthing startup (@ {$configuration['schedule_startup']}:00)";
             	$cronjob['minute'] = $a_cronjob[$cnid]['minute'];
-            	$cronjob['hour'] = $config['syncthing']['schedule_startup'];
+            	$cronjob['hour'] = $configuration['schedule_startup'];
             	$cronjob['day'] = $a_cronjob[$cnid]['day'];
             	$cronjob['month'] = $a_cronjob[$cnid]['month'];
             	$cronjob['weekday'] = $a_cronjob[$cnid]['weekday'];
@@ -191,13 +200,13 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             	$cronjob['all_months'] = $a_cronjob[$cnid]['all_months'];
             	$cronjob['all_weekdays'] = $a_cronjob[$cnid]['all_weekdays'];
             	$cronjob['who'] = 'root';
-            	$cronjob['command'] = "{$config['syncthing']['rootfolder']}syncthing_start.php && logger syncthing: scheduled startup";
+            	$cronjob['command'] = "/usr/local/bin/php-cgi -f {$configuration['rootfolder']}syncthing-start.php && logger syncthing-extension: scheduled startup";
             } else {
             	$cronjob['enable'] = true;
             	$cronjob['uuid'] = uuid();
-            	$cronjob['desc'] = "Syncthing startup (@ {$config['syncthing']['schedule_startup']}:00)";
+            	$cronjob['desc'] = "Syncthing startup (@ {$configuration['schedule_startup']}:00)";
             	$cronjob['minute'] = 0;
-            	$cronjob['hour'] = $config['syncthing']['schedule_startup'];
+            	$cronjob['hour'] = $configuration['schedule_startup'];
             	$cronjob['day'] = true;
             	$cronjob['month'] = true;
             	$cronjob['weekday'] = true;
@@ -207,8 +216,8 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             	$cronjob['all_months'] = 1;
             	$cronjob['all_weekdays'] = 1;
             	$cronjob['who'] = 'root';
-            	$cronjob['command'] = "{$config['syncthing']['rootfolder']}syncthing_start.php && logger syncthing: scheduled startup";
-                $config['syncthing']['schedule_uuid_startup'] = $cronjob['uuid'];
+            	$cronjob['command'] = "/usr/local/bin/php-cgi -f {$configuration['rootfolder']}syncthing-start.php && logger syncthing-extension: scheduled startup";
+                $configuration['schedule_uuid_startup'] = $cronjob['uuid'];
             }
             if (isset($uuid) && (FALSE !== $cnid)) {
             		$a_cronjob[$cnid] = $cronjob;
@@ -223,13 +232,13 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             unset ($cronjob);
             $cronjob = array();
             $a_cronjob = &$config['cron']['job'];
-            $uuid = isset($config['syncthing']['schedule_uuid_closedown']) ? $config['syncthing']['schedule_uuid_closedown'] : false;
+            $uuid = isset($configuration['schedule_uuid_closedown']) ? $configuration['schedule_uuid_closedown'] : false;
             if (isset($uuid) && (FALSE !== ($cnid = array_search_ex($uuid, $a_cronjob, "uuid")))) {
             	$cronjob['enable'] = true;
             	$cronjob['uuid'] = $a_cronjob[$cnid]['uuid'];
-            	$cronjob['desc'] = "Syncthing closedown (@ {$config['syncthing']['schedule_closedown']}:00)";
+            	$cronjob['desc'] = "Syncthing closedown (@ {$configuration['schedule_closedown']}:00)";
             	$cronjob['minute'] = $a_cronjob[$cnid]['minute'];
-            	$cronjob['hour'] = $config['syncthing']['schedule_closedown'];
+            	$cronjob['hour'] = $configuration['schedule_closedown'];
             	$cronjob['day'] = $a_cronjob[$cnid]['day'];
             	$cronjob['month'] = $a_cronjob[$cnid]['month'];
             	$cronjob['weekday'] = $a_cronjob[$cnid]['weekday'];
@@ -239,13 +248,13 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             	$cronjob['all_months'] = $a_cronjob[$cnid]['all_months'];
             	$cronjob['all_weekdays'] = $a_cronjob[$cnid]['all_weekdays'];
             	$cronjob['who'] = 'root';
-            	$cronjob['command'] = 'killall -15 syncthing && logger syncthing: scheduled closedown';
+            	$cronjob['command'] = 'killall syncthing && logger syncthing-extension: scheduled closedown';
             } else {
             	$cronjob['enable'] = true;
             	$cronjob['uuid'] = uuid();
-            	$cronjob['desc'] = "Syncthing closedown (@ {$config['syncthing']['schedule_closedown']}:00)";
+            	$cronjob['desc'] = "Syncthing closedown (@ {$configuration['schedule_closedown']}:00)";
             	$cronjob['minute'] = 0;
-            	$cronjob['hour'] = $config['syncthing']['schedule_closedown'];
+            	$cronjob['hour'] = $configuration['schedule_closedown'];
             	$cronjob['day'] = true;
             	$cronjob['month'] = true;
             	$cronjob['weekday'] = true;
@@ -255,8 +264,8 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             	$cronjob['all_months'] = 1;
             	$cronjob['all_weekdays'] = 1;
             	$cronjob['who'] = 'root';
-            	$cronjob['command'] = 'killall -15 syncthing && logger syncthing: scheduled closedown';
-                $config['syncthing']['schedule_uuid_closedown'] = $cronjob['uuid'];
+            	$cronjob['command'] = 'killall syncthing && logger syncthing-extension: scheduled closedown';
+                $configuration['schedule_uuid_closedown'] = $cronjob['uuid'];
             }
             if (isset($uuid) && (FALSE !== $cnid)) {
             		$a_cronjob[$cnid] = $cronjob;
@@ -267,25 +276,30 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             	}
             updatenotify_set("cronjob", $mode, $cronjob['uuid']);
             write_config();
+			ext_save_config($config_file, $configuration);
         }   // end of enable_schedule
         else {
-            $config['syncthing']['enable_schedule'] = isset($_POST['enable_schedule']) ? true : false;
-        	updatenotify_set("cronjob", UPDATENOTIFY_MODE_DIRTY, $config['syncthing']['schedule_uuid_startup']);
-        	if (is_array($config['cron']['job'])) {
-        				$index = array_search_ex($data, $config['cron']['job'], "uuid");
-        				if (false !== $index) {
-        					unset($config['cron']['job'][$index]);
-        				}
-        			}
+            $configuration['enable_schedule'] = isset($_POST['enable_schedule']) ? true : false;
+
+        	updatenotify_set("cronjob", UPDATENOTIFY_MODE_DIRTY, $configuration['schedule_uuid_startup']);
+			if (is_array($config['cron']) && is_array($config['cron']['job'])) {
+				$index = array_search_ex($data, $config['cron']['job'], "uuid");
+				if (false !== $index) {
+					unset($config['cron']['job'][$index]);
+				}
+			}
         	write_config();
-        	updatenotify_set("cronjob", UPDATENOTIFY_MODE_DIRTY, $config['syncthing']['schedule_uuid_closedown']);
-        	if (is_array($config['cron']['job'])) {
-        				$index = array_search_ex($data, $config['cron']['job'], "uuid");
-        				if (false !== $index) {
-        					unset($config['cron']['job'][$index]);
-        				}
-        			}
+        	updatenotify_set("cronjob", UPDATENOTIFY_MODE_DIRTY, $configuration['schedule_uuid_closedown']);
+			if (is_array($config['cron']) && is_array($config['cron']['job'])) {
+				$index = array_search_ex($data, $config['cron']['job'], "uuid");
+				if (false !== $index) {
+					unset($config['cron']['job'][$index]);
+				}
+			}
         	write_config();
+            unset($configuration['schedule_uuid_startup']);
+            unset($configuration['schedule_uuid_closedown']);
+			ext_save_config($config_file, $configuration);
         }   // end of disable_schedule -> remove cronjobs
 		$retval = 0;
 		if (!file_exists($d_sysrebootreqd_path)) {
@@ -308,11 +322,11 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
 // Description:		This function creates an html code block with the files listed on the right
 //					and radio buttons next to each on the left.
 function filelist ($contains , $exclude='') {
-	global $config ;
+	global $configuration;
 	// This function creates a list of files that match a certain filename pattern
 	$installFiles = "";
-	if ( is_dir( $config['syncthing']['rootfolder'] )) {
-		$raw_list = glob("{$config['syncthing']['backupfolder']}{$contains}.{*}", GLOB_BRACE);
+	if ( is_dir( $configuration['rootfolder'] )) {
+		$raw_list = glob("{$configuration['backupfolder']}{$contains}.{*}", GLOB_BRACE);
 		$file_list = array_unique( $raw_list );
 		if ( $exclude ) {
 			foreach ( $exclude as $search_pattern ) {
@@ -330,13 +344,13 @@ function filelist ($contains , $exclude='') {
 // Description:		This function creates an html code block with the files listed on the right
 //					and radio buttons next to each on the left.
 function radiolist ($file_list) {
-	global $config ;		// import the global config array
+	global $configuration;		// import the global config array
 	$installFiles = "";		// Initialize installFiles as an empty string so we can concatenate in the for loop
-	if (is_dir($config['syncthing']['rootfolder'])) {		// check if the folder is a directory, so it doesn't choke
+	if (is_dir($configuration['rootfolder'])) {		// check if the folder is a directory, so it doesn't choke
 		foreach ( $file_list as $file) {
-			$file = str_replace($config['syncthing']['rootfolder'] . "/", "", $file);
+			$file = str_replace($configuration['rootfolder'] . "/", "", $file);
 			$installFiles .= "<input type=\"radio\" name=\"installfile\" value=\"$file\"> "
-			. str_replace($config['syncthing']['backupfolder'], "", $file)
+			. str_replace($configuration['backupfolder'], "", $file)
 			. "<br/>";
 			} // end of completed folder, filename, suffix creation
 	} // end of verifying rootfolder as valid location
@@ -355,6 +369,8 @@ if (is_ajax()) {
 }
 
 $wait_message = gettext("The selected operation will be completed. Please do not click any other buttons!");
+
+if (($message = ext_check_version("{$configuration['rootfolder']}version_server.txt", "syncthing", $configuration['version'], gettext("Extension Maintenance"))) !== false) $savemsg .= $message;
 
 bindtextdomain("nas4free", "/usr/local/share/locale");
 include("fbegin.inc");?>
@@ -413,25 +429,25 @@ function enable_change(enable_change) {
         <?php if (!empty($input_errors)) print_input_errors($input_errors);?>
         <?php if (!empty($savemsg)) print_info_box($savemsg);?>
         <table width="100%" border="0" cellpadding="6" cellspacing="0">
-            <?php html_titleline($config['syncthing']['appname']." ".gettext("Update"));?>
+            <?php html_titleline($configuration['appname']." ".gettext("Update"));?>
     		  <tr>
     		    <td class="vncell"><?=gettext("Status");?></td>
                 <td class="vtable"><span name="procinfo" id="procinfo"></span></td>
     		  </tr>
- 			<?php html_text("version_current", gettext("Installed version"), $config['syncthing']['product_version']);?>
+ 			<?php html_text("version_current", gettext("Installed version"), $configuration['product_version']);?>
 			<tr>
 				<td valign="top" class="vncell"><?=gettext("Latest version fetched from Syncthing server");?>
 				</td>
 				<td class="vtable"><?=$pconfig['product_version_new'].gettext(" - push 'fetch' button to check for new version");?>
                     <span class="label">&nbsp;&nbsp;&nbsp;</span>
                     <input id="fetch" name="fetch" type="submit" class="formbtn" value="<?=gettext("Fetch");?>" onClick="return fetch_handler();" />
-                    <?php if (($config['syncthing']['product_version_new'] !== "n/a") && (strpos($config['syncthing']['product_version'], $config['syncthing']['product_version_new']) === false)) { ?>
+                    <?php if (($configuration['product_version_new'] !== "n/a") && (strpos($configuration['product_version'], $configuration['product_version_new']) === false)) { ?>
                         <input id="install_new" name="install_new" type="submit" class="formbtn" value="<?=gettext("Install");?>" onClick="return fetch_handler();" />
                     <?php } ?>
                     <a href='http://syncthing.net/' target='_blank'>&nbsp;&nbsp;&nbsp;-> Syncthing</a>
 				</td>
 			</tr>
-            <?php html_inputbox("download_url", gettext("Download URL"), $config['syncthing']['download_url'], sprintf(gettext("Define a new permanent application download URL or an URL for a one-time download of a previous version.<br />Previous download URL was <b>%s</b>"), $config['syncthing']['previous_url']), false, 110);?>
+            <?php html_inputbox("download_url", gettext("Download URL"), $configuration['download_url'], sprintf(gettext("Define a new permanent application download URL or an URL for a one-time download of a previous version.<br />Previous download URL was <b>%s</b>"), $configuration['previous_url']), false, 110);?>
         </table>
         <div id="remarks">
             <?php html_remark("note_url", gettext("Note"), sprintf(gettext("Use 'Save URL' to change the download URL permanently, 'Revert URL' to activate a previously saved URL or '%s' to download a previous version - for example <b>https://github.com/syncthing/syncthing/releases/download/v0.10.6/syncthing-freebsd-amd64-v0.10.6.tar.gz</b>."), gettext("Download and Install")));?>
@@ -461,14 +477,14 @@ function enable_change(enable_change) {
         </div>
         <table width="100%" border="0" cellpadding="6" cellspacing="0">
 			<?php html_separator();?>
-        	<?php html_titleline_checkbox("enable_schedule", gettext("Daily schedule"), isset($config['syncthing']['enable_schedule']) ? true : false, gettext("Enable"), "enable_change(false)");?>
+        	<?php html_titleline_checkbox("enable_schedule", gettext("Daily schedule"), $configuration['enable_schedule'], gettext("Enable"), "enable_change(false)");?>
     		<?php $hours = array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23); ?>
-            <?php html_combobox("startup", gettext("Startup"), $config['syncthing']['schedule_startup'], $hours, gettext("Choose a startup hour for")." ".$config['syncthing']['appname'], true);?>
-            <?php html_combobox("closedown", gettext("Closedown"), $config['syncthing']['schedule_closedown'], $hours, gettext("Choose a closedown hour for")." ".$config['syncthing']['appname'], true);?>
+            <?php html_combobox("startup", gettext("Startup"), $configuration['schedule_startup'], $hours, gettext("Choose a startup hour for")." ".$configuration['appname'], true);?>
+            <?php html_combobox("closedown", gettext("Closedown"), $configuration['schedule_closedown'], $hours, gettext("Choose a closedown hour for")." ".$configuration['appname'], true);?>
 			<?php html_separator();?>
         </table>
         <div id="submit_schedule">
-            <?php if (!isset($config['syncthing']['command'])){ $disabled = "disabled"; } else { $disabled = ""; } ?>
+            <?php if (!isset($configuration['command'])){ $disabled = "disabled"; } else { $disabled = ""; } ?>
             <input id="schedule" name="schedule" type="submit" <?=$disabled;?> class="formbtn" value="<?=gettext("Save and Restart");?>" onclick="enable_change(true)" />
         </div>
         <?php 

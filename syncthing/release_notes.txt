@@ -1,8 +1,23 @@
 ﻿Version Date        Description
+0.2     2017.01.03  N: command scripts rc format for NAS4Free 11.x compatibility
+                    N: use dedicated config file
+                    N: Spanish translation
+                    N: Swedish translation
+                    N: Ukrainian translation
+                    C: updated German translation
+                    C: updated Greek translation
+                    C: updated French translation
+                    C: updated Italian translation
+                    C: updated Russian translation
+                    C: set initial Syncthing release to v0.14.8
+                    F: upgrade issues for Syncthing v0.14.17 and newer => http://forums.nas4free.org/viewtopic.php?f=71&t=11189&p=74298#p74223
+
 0.1.5   2016.06.04  minor bug fix, set initial Syncthing release to v0.12.25 (the last and only v0.12.xx release, 
                     previous releases were removed from Github). To upgrade to v0.13.xx fetch the most recent release
                     inside the extensions under the maintenance tab or upgrade via the Syncthing application.
+
 0.1.4   2016.01.30  minor bug fixes and GUI enhancements, set most recent Syncthing release
+
 0.1.3   2015.02.13  F: check for / use root certificate - Syncthing application needs it now for (automatic) upgrade-check/upgrade
                     C: repository to Github
                     C: default globalAnnounceServer address -> udp4://announce.syncthing.net:22026
@@ -11,9 +26,12 @@
                     C: updated French translation
                     C: updated Russian translation
                     C: updated German translation
+
 0.1.2   2015.02.03  F: minor bug in product_version
                     C: download most recent version v0.10.21 on installation
+
 0.1.1   2014.12.09  F: renew product_version on auto-upgrade
+
 0.1.0   2014.12.07  first public release
 
 N: ...  new feature
