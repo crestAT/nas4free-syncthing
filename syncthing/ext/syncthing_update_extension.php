@@ -49,7 +49,7 @@ if (is_file("{$configuration['updatefolder']}oneload")) {
     require_once("{$configuration['updatefolder']}oneload");
 }
 
-$return_val = mwexec("fetch -o {$configuration['updatefolder']}version.txt https://raw.github.com/crestAT/nas4free-syncthing/master/syncthing/version.txt", true);
+$return_val = mwexec("fetch -o {$configuration['updatefolder']}version.txt https://raw.github.com/crestAT/nas4free-syncthing/master/syncthing/version.txt", false);
 if ($return_val == 0) {
     $server_version = exec("cat {$configuration['updatefolder']}version.txt");
     if ($server_version != $configuration['version']) { $savemsg = sprintf(gettext("New extension version %s available, push '%s' button to install the new version!"), $server_version, gettext("Update Extension")); }

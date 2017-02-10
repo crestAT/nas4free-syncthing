@@ -181,6 +181,7 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             $configuration['enable_schedule'] = isset($_POST['enable_schedule']) ? true : false;
             $configuration['schedule_startup'] = $_POST['startup'];
             $configuration['schedule_closedown'] = $_POST['closedown'];
+            $configuration['schedule_prohibit'] = isset($_POST['prohibit']);
     
             $cronjob = array();
             $a_cronjob = &$config['cron']['job'];
@@ -405,6 +406,7 @@ function enable_change(enable_change) {
 	var endis = !(document.iform.enable_schedule.checked || enable_change);
 	document.iform.startup.disabled = endis;
 	document.iform.closedown.disabled = endis;
+	document.iform.prohibit.disabled = endis;
 }
 
 //-->
@@ -481,6 +483,7 @@ function enable_change(enable_change) {
     		<?php $hours = array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23); ?>
             <?php html_combobox("startup", gettext("Startup"), $configuration['schedule_startup'], $hours, gettext("Choose a startup hour for")." ".$configuration['appname'], true);?>
             <?php html_combobox("closedown", gettext("Closedown"), $configuration['schedule_closedown'], $hours, gettext("Choose a closedown hour for")." ".$configuration['appname'], true);?>
+            <?php html_checkbox("prohibit", gettext("System Startup"), $configuration['schedule_prohibit'], gettext("Prohibit Syncthing start on system startup."), false);?>
 			<?php html_separator();?>
         </table>
         <div id="submit_schedule">

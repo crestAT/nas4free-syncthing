@@ -1,4 +1,8 @@
 ﻿Version Date        Description
+0.2.1   2017.02.10  N: switch System Startup in Maintenance > Daily Schedule to prohibit Synthing start 
+                        on system startup if daily scheduling is activated
+                    C: set initial Syncthing release to v0.14.23
+
 0.2     2017.01.03  N: command scripts rc format for NAS4Free 11.x compatibility
                     N: use dedicated config file
                     N: Spanish translation

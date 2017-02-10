@@ -29,8 +29,8 @@
     of the authors and should not be interpreted as representing official policies,
     either expressed or implied, of the FreeBSD Project.
 */
-$version = "v0.2";			// extension version
-$v = "v0.14.8";				// application version
+$version = "v0.2.1";		// extension version
+$v = "v0.14.23";			// application version
 $appname = "Syncthing";
 $config_name = strtolower($appname);
 $version_striped = str_replace(".", "", $version);
