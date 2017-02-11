@@ -90,7 +90,7 @@ $configuration['rootfolder'] = "{$install_dir}syncthing/";
 $configuration['backupfolder'] = $configuration['rootfolder']."backup/";
 $configuration['updatefolder'] = $configuration['rootfolder']."update/";
 $configuration['version'] = exec("cat {$configuration['rootfolder']}version.txt");
-$configuration['postinit'] = "/usr/local/bin/php-cgi -f {$configuration['rootfolder']}syncthing-start.php";
+$configuration['postinit'] = "php {$configuration['rootfolder']}syncthing-start.php";
 $configuration['shutdown'] = "killall syncthing";
 if ($arch == "i386" || $arch == "x86") { $configuration['architecture'] = "386"; }
 else { $configuration['architecture'] = "amd64"; }

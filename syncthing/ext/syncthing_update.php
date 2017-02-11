@@ -201,7 +201,7 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             	$cronjob['all_months'] = $a_cronjob[$cnid]['all_months'];
             	$cronjob['all_weekdays'] = $a_cronjob[$cnid]['all_weekdays'];
             	$cronjob['who'] = 'root';
-            	$cronjob['command'] = "/usr/local/bin/php-cgi -f {$configuration['rootfolder']}syncthing-start.php && logger syncthing-extension: scheduled startup";
+            	$cronjob['command'] = "php {$configuration['rootfolder']}syncthing-start.php scheduled && logger syncthing-extension: scheduled startup";
             } else {
             	$cronjob['enable'] = true;
             	$cronjob['uuid'] = uuid();
@@ -217,7 +217,7 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             	$cronjob['all_months'] = 1;
             	$cronjob['all_weekdays'] = 1;
             	$cronjob['who'] = 'root';
-            	$cronjob['command'] = "/usr/local/bin/php-cgi -f {$configuration['rootfolder']}syncthing-start.php && logger syncthing-extension: scheduled startup";
+            	$cronjob['command'] = "php {$configuration['rootfolder']}syncthing-start.php scheduled && logger syncthing-extension: scheduled startup";
                 $configuration['schedule_uuid_startup'] = $cronjob['uuid'];
             }
             if (isset($uuid) && (FALSE !== $cnid)) {

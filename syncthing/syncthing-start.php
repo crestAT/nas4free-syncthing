@@ -87,7 +87,7 @@ $return_val += mwexec("ln -sfw {$rootfolder}ext/syncthing_update_extension.php /
 if ($return_val != 0) mwexec("logger syncthing-extension: error during startup, link creation failed with return value = {$return_val}");
 else if ($configuration['enable']) {
 	    mwexec("killall syncthing");
-	    if ($configuration['enable_schedule'] && $configuration['schedule_prohibit']) mwexec("logger syncthing-extension: Syncthing start prohibited due to scheduler settings!");
+	    if ($configuration['enable_schedule'] && $configuration['schedule_prohibit'] && ($argc == 1)) mwexec("logger syncthing-extension: Syncthing start prohibited due to scheduler settings!");
 	    else {
 		    mwexec("logger syncthing-extension: enabled, start syncthing ...");
 		    exec($configuration['command']);
