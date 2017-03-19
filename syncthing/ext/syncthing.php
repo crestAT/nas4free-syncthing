@@ -5,10 +5,6 @@
     Copyright (c) 2013 - 2017 Andreas Schmidhuber <info@a3s.at>
     All rights reserved.
 
-	Portions of NAS4Free (http://www.nas4free.org).
-	Copyright (c) 2012-2017 The NAS4Free Project <info@nas4free.org>.
-	All rights reserved.
-
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions are met:
 
@@ -28,10 +24,6 @@
     ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-    The views and conclusions contained in the software and documentation are those
-    of the authors and should not be interpreted as representing official policies,
-    either expressed or implied, of the FreeBSD Project.
  */
 require("auth.inc");
 require("guiconfig.inc");
@@ -157,6 +149,7 @@ if (isset($_POST['save']) && $_POST['save']) {
             if ($return_val != 0) { $input_errors = $output; }
             if ($configuration['enable_schedule']) {  // if cronjobs exists -> activate
                 $cronjob = array();
+				if (!is_array($config['cron'])) $config['cron'] = [];
                 $a_cronjob = &$config['cron']['job'];
                 $uuid = isset($configuration['schedule_uuid_startup']) ? $configuration['schedule_uuid_startup'] : false;
                 if (isset($uuid) && (FALSE !== ($cnid = array_search_ex($uuid, $a_cronjob, "uuid")))) {
@@ -187,6 +180,7 @@ if (isset($_POST['save']) && $_POST['save']) {
 
                 unset ($cronjob);
                 $cronjob = array();
+				if (!is_array($config['cron'])) $config['cron'] = [];
                 $a_cronjob = &$config['cron']['job'];
                 $uuid = isset($configuration['schedule_uuid_closedown']) ? $configuration['schedule_uuid_closedown'] : false;
                 if (isset($uuid) && (FALSE !== ($cnid = array_search_ex($uuid, $a_cronjob, "uuid")))) {
@@ -236,6 +230,7 @@ if (isset($_POST['save']) && $_POST['save']) {
             $configuration['enable'] = isset($_POST['enable']);
             if ($configuration['enable_schedule']) {  // if cronjobs exists -> deactivate
                 $cronjob = array();
+				if (!is_array($config['cron'])) $config['cron'] = [];
                 $a_cronjob = &$config['cron']['job'];
                 $uuid = isset($configuration['schedule_uuid_startup']) ? $configuration['schedule_uuid_startup'] : false;
                 if (isset($uuid) && (FALSE !== ($cnid = array_search_ex($uuid, $a_cronjob, "uuid")))) {
@@ -266,6 +261,7 @@ if (isset($_POST['save']) && $_POST['save']) {
     
                 unset ($cronjob);
                 $cronjob = array();
+				if (!is_array($config['cron'])) $config['cron'] = [];
                 $a_cronjob = &$config['cron']['job'];
                 $uuid = isset($configuration['schedule_uuid_closedown']) ? $configuration['schedule_uuid_closedown'] : false;
                 if (isset($uuid) && (FALSE !== ($cnid = array_search_ex($uuid, $a_cronjob, "uuid")))) {
@@ -508,6 +504,7 @@ function as_change() {
         <?php if (!empty($savemsg)) print_info_box($savemsg);?>
         <table width="100%" border="0" cellpadding="6" cellspacing="0">
 			<?php html_titleline($configuration['appname']." ".gettext("Information"));?>
+            <?php html_text("installation_directory", gettext("Installation directory"), sprintf(gettext("The extension is installed in %s."), $configuration['rootfolder']));?>
 			<?php html_text("version", gettext("Version"), $configuration['product_version']);?>
 			<?php html_text("architecture", gettext("Architecture"), $configuration['architecture']);?>		
             <tr>

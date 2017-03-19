@@ -5,10 +5,6 @@
     Copyright (c) 2013 - 2017 Andreas Schmidhuber <info@a3s.at>
     All rights reserved.
 
-	Portions of NAS4Free (http://www.nas4free.org).
-	Copyright (c) 2012-2017 The NAS4Free Project <info@nas4free.org>.
-	All rights reserved.
-
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions are met:
 
@@ -28,10 +24,6 @@
     ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-    The views and conclusions contained in the software and documentation are those
-    of the authors and should not be interpreted as representing official policies,
-    either expressed or implied, of the FreeBSD Project.
  */
 require("auth.inc");
 require("guiconfig.inc");
@@ -184,6 +176,7 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             $configuration['schedule_prohibit'] = isset($_POST['prohibit']);
     
             $cronjob = array();
+			if (!is_array($config['cron'])) $config['cron'] = [];
             $a_cronjob = &$config['cron']['job'];
             $uuid = isset($configuration['schedule_uuid_startup']) ? $configuration['schedule_uuid_startup'] : false;
             if (isset($uuid) && (FALSE !== ($cnid = array_search_ex($uuid, $a_cronjob, "uuid")))) {
@@ -201,7 +194,7 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             	$cronjob['all_months'] = $a_cronjob[$cnid]['all_months'];
             	$cronjob['all_weekdays'] = $a_cronjob[$cnid]['all_weekdays'];
             	$cronjob['who'] = 'root';
-            	$cronjob['command'] = "php {$configuration['rootfolder']}syncthing-start.php scheduled && logger syncthing-extension: scheduled startup";
+            	$cronjob['command'] = "/usr/local/bin/php-cgi -f {$configuration['rootfolder']}syncthing-start.php && logger syncthing-extension: scheduled startup";
             } else {
             	$cronjob['enable'] = true;
             	$cronjob['uuid'] = uuid();
@@ -217,7 +210,7 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             	$cronjob['all_months'] = 1;
             	$cronjob['all_weekdays'] = 1;
             	$cronjob['who'] = 'root';
-            	$cronjob['command'] = "php {$configuration['rootfolder']}syncthing-start.php scheduled && logger syncthing-extension: scheduled startup";
+            	$cronjob['command'] = "/usr/local/bin/php-cgi -f {$configuration['rootfolder']}syncthing-start.php && logger syncthing-extension: scheduled startup";
                 $configuration['schedule_uuid_startup'] = $cronjob['uuid'];
             }
             if (isset($uuid) && (FALSE !== $cnid)) {
@@ -232,6 +225,7 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
     
             unset ($cronjob);
             $cronjob = array();
+			if (!is_array($config['cron'])) $config['cron'] = [];
             $a_cronjob = &$config['cron']['job'];
             $uuid = isset($configuration['schedule_uuid_closedown']) ? $configuration['schedule_uuid_closedown'] : false;
             if (isset($uuid) && (FALSE !== ($cnid = array_search_ex($uuid, $a_cronjob, "uuid")))) {
@@ -483,7 +477,7 @@ function enable_change(enable_change) {
     		<?php $hours = array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23); ?>
             <?php html_combobox("startup", gettext("Startup"), $configuration['schedule_startup'], $hours, gettext("Choose a startup hour for")." ".$configuration['appname'], true);?>
             <?php html_combobox("closedown", gettext("Closedown"), $configuration['schedule_closedown'], $hours, gettext("Choose a closedown hour for")." ".$configuration['appname'], true);?>
-            <?php html_checkbox("prohibit", gettext("System Startup"), $configuration['schedule_prohibit'], gettext("Prohibit Syncthing start on system startup."), false);?>
+            <?php html_checkbox("prohibit", gettext("System Startup"), $configuration['schedule_prohibit'], gettext("Prohibit Syncthing start on system startup if scheduling is activated and the server startup time is outside the range of the defined startup and closedown hour. "), false);?>
 			<?php html_separator();?>
         </table>
         <div id="submit_schedule">

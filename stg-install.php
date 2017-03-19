@@ -2,7 +2,7 @@
 /* 
     stg-install.php
      
-    Copyright (c) 2014 - 2017 Andreas Schmidhuber
+    Copyright (c) 2013 - 2017 Andreas Schmidhuber <info@a3s.at>
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -24,12 +24,8 @@
     ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-    The views and conclusions contained in the software and documentation are those
-    of the authors and should not be interpreted as representing official policies,
-    either expressed or implied, of the FreeBSD Project.
 */
-$version = "v0.2.1";		// extension version
+$version = "v0.2.2";		// extension version
 $v = "v0.14.23";			// application version
 $appname = "Syncthing";
 $config_name = strtolower($appname);
@@ -90,7 +86,7 @@ $configuration['rootfolder'] = "{$install_dir}syncthing/";
 $configuration['backupfolder'] = $configuration['rootfolder']."backup/";
 $configuration['updatefolder'] = $configuration['rootfolder']."update/";
 $configuration['version'] = exec("cat {$configuration['rootfolder']}version.txt");
-$configuration['postinit'] = "php {$configuration['rootfolder']}syncthing-start.php";
+$configuration['postinit'] = "/usr/local/bin/php-cgi -f {$configuration['rootfolder']}syncthing-start.php";
 $configuration['shutdown'] = "killall syncthing";
 if ($arch == "i386" || $arch == "x86") { $configuration['architecture'] = "386"; }
 else { $configuration['architecture'] = "amd64"; }
@@ -111,7 +107,6 @@ ext_remove_rc_commands($config_name);
 $configuration['rc_uuid_start'] = $configuration['postinit'];
 $configuration['rc_uuid_stop'] = $configuration['shutdown'];
 ext_create_rc_commands($appname, $configuration['rc_uuid_start'], $configuration['rc_uuid_stop']);
-write_config();
 ext_save_config($config_file, $configuration);
 
 if ($new_installation) echo "\nInstallation completed, use WebGUI | Extensions | ".$appname." to configure the application!\n";
