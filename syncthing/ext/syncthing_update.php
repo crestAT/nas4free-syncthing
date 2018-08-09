@@ -2,7 +2,7 @@
 /*
     syncthing_update.php
     
-    Copyright (c) 2013 - 2017 Andreas Schmidhuber <info@a3s.at>
+    Copyright (c) 2013 - 2018 Andreas Schmidhuber
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,10 @@
 require("auth.inc");
 require("guiconfig.inc");
 
-bindtextdomain("nas4free", "/usr/local/share/locale-stg");
+$domain = strtolower(get_product_name());
+$localeOSDirectory = "/usr/local/share/locale";
+$localeExtDirectory = "/usr/local/share/locale-stg";
+bindtextdomain($domain, $localeExtDirectory);
 
 $config_file = "ext/syncthing/syncthing.conf";
 require_once("ext/syncthing/extension-lib.inc");
@@ -61,7 +64,7 @@ if (isset($_POST['get_file']) && $_POST['get_file']) {
         $v = explode(" ", stg_call("syncthing -version"));
         mwexec("cp -v {$configuration['rootfolder']}syncthing {$configuration['backupfolder']}syncthing-{$v[1]}", true);
         $savemsg .= sprintf(gettext("Syncthing version %s has been backuped!"), $v[1]);
-        $return_val = mwexec ("fetch -o {$configuration['rootfolder']}stable {$_POST['download_url']}", true);
+        $return_val = mwexec ("fetch -o {$configuration['rootfolder']}stable {$_POST['download_url']}", false);
         if ( $return_val != 0) { $input_errors[] = gettext("Could not install new version!"); }
         else {
             exec ("cd {$configuration['rootfolder']} && tar -xzvf stable --strip-components 1");
@@ -84,10 +87,14 @@ if (isset($_POST['install_new']) && $_POST['install_new']) {
     stg_call("syncthing -upgrade", $return_val); 
     if ( $return_val != 0) { $input_errors[] = gettext("Could not install new version!"); }
     else {
-        if ($configuration['enable']) { exec($configuration['command']); }
+        if ($configuration['enable']) exec($configuration['command']);
         $configuration['product_version'] = stg_call("syncthing -version");
-        $v = explode(" ", stg_call("syncthing.old -version"));
+        // backup current product version
+        $v = explode(" ", stg_call("syncthing -version"));
        	copy($configuration['rootfolder']."syncthing", $configuration['backupfolder']."syncthing-{$v[1]}");
+        // backup previous product version
+        $v = explode(" ", stg_call("syncthing.old -version"));
+       	copy($configuration['rootfolder']."syncthing.old", $configuration['backupfolder']."syncthing-{$v[1]}");
         $pconfig['product_version_new'] = "n/a";
         $configuration['product_version_new'] = $pconfig['product_version_new'];
 		ext_save_config($config_file, $configuration);
@@ -133,12 +140,12 @@ if ( isset( $_POST['install_backup'] ) && $_POST['install_backup'] ) {
             }
             if (!copy($_POST['installfile'], $configuration['rootfolder']."syncthing")) { $input_errors[] = gettext("Could not install backup version!"); }
             else {
-                if ($configuration['enable']) { exec($configuration['command']); }
+                if ($configuration['enable']) exec($configuration['command']);
                 $configuration['product_version'] = stg_call("syncthing -version");
                 $pconfig['product_version_new'] = "n/a"; 
                 $configuration['product_version_new'] = $pconfig['product_version_new'];
 				ext_save_config($config_file, $configuration);
-                if ($configuration['enable']) { $savemsg .= gettext("Backup version installed!"); }
+                if ($configuration['enable']) $savemsg .= gettext("Backup version installed!");
                 else { $savemsg .= sprintf(gettext("Backup version installed! Go to %s and enable, save & restart to run %s !"), gettext('Configuration'), $configuration['appname']); }
             }
         }
@@ -243,7 +250,7 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             	$cronjob['all_months'] = $a_cronjob[$cnid]['all_months'];
             	$cronjob['all_weekdays'] = $a_cronjob[$cnid]['all_weekdays'];
             	$cronjob['who'] = 'root';
-            	$cronjob['command'] = 'killall syncthing && logger syncthing-extension: scheduled closedown';
+            	$cronjob['command'] = 'touch /tmp/extended-gui_syncthing_schedule_stopped.lock && killall syncthing && logger syncthing-extension: scheduled closedown';
             } else {
             	$cronjob['enable'] = true;
             	$cronjob['uuid'] = uuid();
@@ -259,7 +266,7 @@ if ( isset( $_POST['schedule'] ) && $_POST['schedule'] ) {
             	$cronjob['all_months'] = 1;
             	$cronjob['all_weekdays'] = 1;
             	$cronjob['who'] = 'root';
-            	$cronjob['command'] = 'killall syncthing && logger syncthing-extension: scheduled closedown';
+            	$cronjob['command'] = 'touch /tmp/extended-gui_syncthing_schedule_stopped.lock && killall syncthing && logger syncthing-extension: scheduled closedown';
                 $configuration['schedule_uuid_closedown'] = $cronjob['uuid'];
             }
             if (isset($uuid) && (FALSE !== $cnid)) {
@@ -367,7 +374,7 @@ $wait_message = gettext("The selected operation will be completed. Please do not
 
 if (($message = ext_check_version("{$configuration['rootfolder']}version_server.txt", "syncthing", $configuration['version'], gettext("Extension Maintenance"))) !== false) $savemsg .= $message;
 
-bindtextdomain("nas4free", "/usr/local/share/locale");
+bindtextdomain($domain, $localeOSDirectory);
 include("fbegin.inc");?>
 <script type="text/javascript">//<![CDATA[
 $(document).ready(function(){
@@ -411,7 +418,7 @@ function enable_change(enable_change) {
 <!-- use: onsubmit="spinner()" within the form tag -->
 
 <form action="syncthing_update.php" method="post" name="iform" id="iform" onsubmit="spinner()">
-<?php bindtextdomain("nas4free", "/usr/local/share/locale-stg"); ?>
+<?php bindtextdomain($domain, $localeExtDirectory); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
 	<tr><td class="tabnavtbl">
 		<ul id="tabnav">

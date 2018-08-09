@@ -1,7 +1,7 @@
 <!--
     spinner.inc
 
-    Copyright (c) 2013 - 2017 Andreas Schmidhuber
+    Copyright (c) 2013 - 2018 Andreas Schmidhuber
     All rights reserved.
 
     Uses spin.js by Felix Gnass (fgnass) at http://spin.js.org

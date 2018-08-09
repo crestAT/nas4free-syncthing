@@ -2,7 +2,7 @@
 /*
 	syncthing_log.inc
 
-    Copyright (c) 2013 - 2017 Andreas Schmidhuber <info@a3s.at>
+    Copyright (c) 2013 - 2018 Andreas Schmidhuber
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,10 @@
 require_once("globals.inc");
 require_once("rc.inc");
 
-bindtextdomain("nas4free", "/usr/local/share/locale-stg");
+$domain = strtolower(get_product_name());
+$localeOSDirectory = "/usr/local/share/locale";
+$localeExtDirectory = "/usr/local/share/locale-stg";
+bindtextdomain($domain, $localeExtDirectory);
 
 $config_file = "ext/syncthing/syncthing.conf";
 require_once("ext/syncthing/extension-lib.inc");

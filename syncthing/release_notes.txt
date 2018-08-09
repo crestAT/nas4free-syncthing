@@ -1,4 +1,13 @@
 ﻿Version Date        Description
+0.2.3   2018.08.09  N: avoid alarming for Extended GUI service monitoring if Syncthing is stopped due to daily schedule
+                    N: Czech translation
+                    N: Kurdish translation
+                    N: Turkish translation
+                    C: updated French translation
+                    C: updated Italian translation
+                    C: backup of product executable at product update time                   
+                    F: GUI translations not working due to name change to XigmaNAS
+
 0.2.2   2017.03.19  C: made extension PHP 7.1 aware
                     F: for switch System Startup in Maintenance > Daily Schedule
 

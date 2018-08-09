@@ -2,7 +2,7 @@
 /* 
     stg-install.php
      
-    Copyright (c) 2013 - 2017 Andreas Schmidhuber <info@a3s.at>
+    Copyright (c) 2013 - 2018 Andreas Schmidhuber
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -25,8 +25,8 @@
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-$version = "v0.2.2";		// extension version
-$v = "v0.14.23";			// application version
+$version = "v0.2.3";		// extension version
+$v = "v0.14.49";			// application version
 $appname = "Syncthing";
 $config_name = strtolower($appname);
 $version_striped = str_replace(".", "", $version);

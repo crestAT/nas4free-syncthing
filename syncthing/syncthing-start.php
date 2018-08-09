@@ -2,7 +2,7 @@
 /* 
     syncthing-start.php
 
-    Copyright (c) 2013 - 2017 Andreas Schmidhuber <info@a3s.at>
+    Copyright (c) 2013 - 2018 Andreas Schmidhuber
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -76,15 +76,22 @@ $return_val += mwexec("ln -sfw {$rootfolder}ext/syncthing_log.php /usr/local/www
 $return_val += mwexec("ln -sfw {$rootfolder}ext/syncthing_log.inc /usr/local/www/syncthing_log.inc", true);
 $return_val += mwexec("ln -sfw {$rootfolder}ext/syncthing_update.php /usr/local/www/syncthing_update.php", true);
 $return_val += mwexec("ln -sfw {$rootfolder}ext/syncthing_update_extension.php /usr/local/www/syncthing_update_extension.php", true);
+// check for product name and eventually rename translation files for new product name (XigmaNAS)
+$domain = strtolower(get_product_name());
+if ($domain <> "nas4free") {
+	$return_val += mwexec("find {$rootfolder}locale-stg -name nas4free.mo -execdir mv nas4free.mo {$domain}.mo \;", true);
+}
 if ($return_val != 0) mwexec("logger syncthing-extension: error during startup, link creation failed with return value = {$return_val}");
 else if ($configuration['enable']) {
 	    mwexec("killall syncthing");
 		$check_hour = date("G");
 	    if ($configuration['enable_schedule'] && $configuration['schedule_prohibit'] && (($check_hour < $configuration['schedule_startup']) || ($check_hour >= $configuration['schedule_closedown']))) {
 			mwexec("logger syncthing-extension: Syncthing start prohibited due to scheduler settings!");
+			touch("/tmp/extended-gui_syncthing_schedule_stopped.lock");		// to avoid alarming for Extended GUI service monitoring
 		}
 	    else {
 		    mwexec("logger syncthing-extension: enabled, start syncthing ...");
+		    if (is_file("/tmp/extended-gui_syncthing_schedule_stopped.lock")) unlink("/tmp/extended-gui_syncthing_schedule_stopped.lock");
 		    exec($configuration['command']);
 		    sleep(5);														// give time to startup
 		    if (exec('ps acx | grep syncthing')) { mwexec("logger syncthing-extension: startup OK"); }

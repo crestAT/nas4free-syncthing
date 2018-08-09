@@ -2,7 +2,7 @@
 /*
     syncthing_update_extension.php
     
-    Copyright (c) 2013 - 2017 Andreas Schmidhuber <info@a3s.at>
+    Copyright (c) 2013 - 2018 Andreas Schmidhuber
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,10 @@
 require("auth.inc");
 require("guiconfig.inc");
 
-bindtextdomain("nas4free", "/usr/local/share/locale-stg");
+$domain = strtolower(get_product_name());
+$localeOSDirectory = "/usr/local/share/locale";
+$localeExtDirectory = "/usr/local/share/locale-stg";
+bindtextdomain($domain, $localeExtDirectory);
 
 $config_file = "ext/syncthing/syncthing.conf";
 require_once("ext/syncthing/extension-lib.inc");
@@ -123,7 +126,7 @@ if (isset($_POST['ext_remove']) && $_POST['ext_remove']) {
 if (isset($_POST['ext_update']) && $_POST['ext_update']) {
     $install_dir = dirname($configuration['rootfolder']);
 // download installer
-    $return_val = mwexec("fetch -vo {$install_dir}/stg-install.php https://raw.github.com/crestAT/nas4free-syncthing/master/stg-install.php", true);
+    $return_val = mwexec("fetch -vo {$install_dir}/stg-install.php https://raw.github.com/crestAT/nas4free-syncthing/master/stg-install.php", false);
     if ($return_val == 0) {
         require_once("{$install_dir}/stg-install.php"); 
         header("Refresh:8");;
@@ -132,7 +135,7 @@ if (isset($_POST['ext_update']) && $_POST['ext_update']) {
     else { $input_errors[] = sprintf(gettext("Archive file %s not found, installation aborted!"), "{$install_dir}/stg-install.php"); }
 }
 
-bindtextdomain("nas4free", "/usr/local/share/locale");
+bindtextdomain($domain, $localeOSDirectory);
 include("fbegin.inc");?>
 <!-- The Spinner Elements -->
 <?php include("ext/syncthing/spinner.inc");?>
@@ -140,7 +143,7 @@ include("fbegin.inc");?>
 <!-- use: onsubmit="spinner()" within the form tag -->
 
 <form action="syncthing_update_extension.php" method="post" name="iform" id="iform" onsubmit="spinner()">
-<?php bindtextdomain("nas4free", "/usr/local/share/locale-stg"); ?>
+<?php bindtextdomain($domain, $localeExtDirectory); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
 	<tr><td class="tabnavtbl">
 		<ul id="tabnav">

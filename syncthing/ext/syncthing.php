@@ -2,7 +2,7 @@
 /* 
     syncthing.php
 
-    Copyright (c) 2013 - 2017 Andreas Schmidhuber <info@a3s.at>
+    Copyright (c) 2013 - 2018 Andreas Schmidhuber
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,10 @@
 require("auth.inc");
 require("guiconfig.inc");
 
-bindtextdomain("nas4free", "/usr/local/share/locale-stg");
+$domain = strtolower(get_product_name());
+$localeOSDirectory = "/usr/local/share/locale";
+$localeExtDirectory = "/usr/local/share/locale-stg";
+bindtextdomain($domain, $localeExtDirectory);
 
 $config_file = "ext/syncthing/syncthing.conf";
 require_once("ext/syncthing/extension-lib.inc");
@@ -380,7 +383,7 @@ if (is_ajax()) {
 
 if (($message = ext_check_version("{$configuration['rootfolder']}version_server.txt", "syncthing", $configuration['version'], gettext("Extension Maintenance"))) !== false) $savemsg .= $message;
 
-bindtextdomain("nas4free", "/usr/local/share/locale");
+bindtextdomain($domain, $localeOSDirectory);
 include("fbegin.inc");?>  
 <script type="text/javascript">//<![CDATA[
 $(document).ready(function(){
@@ -489,7 +492,7 @@ function as_change() {
 <!-- use: onsubmit="spinner()" within the form tag -->
 
 <form action="syncthing.php" method="post" name="iform" id="iform" onsubmit="spinner()">
-<?php bindtextdomain("nas4free", "/usr/local/share/locale-stg"); ?>
+<?php bindtextdomain($domain, $localeExtDirectory); ?>
     <table width="100%" border="0" cellpadding="0" cellspacing="0">
 	<tr><td class="tabnavtbl">
 		<ul id="tabnav">
